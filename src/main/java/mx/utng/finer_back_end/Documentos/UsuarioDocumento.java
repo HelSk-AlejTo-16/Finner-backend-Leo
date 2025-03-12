@@ -12,7 +12,7 @@ public class UsuarioDocumento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
-    private Long id;
+    private Long idUsuario;
 
     @NotBlank
     @Column(name = "nombre")
@@ -20,7 +20,7 @@ public class UsuarioDocumento {
 
     @NotNull
     @Column(name = "id_rol")
-    private Integer idRol; // Cambié @NotBlank a @NotNull
+    private Integer idRol; 
 
     @Column(name = "apellido_paterno")
     private String apellidoPaterno;
@@ -57,11 +57,11 @@ public class UsuarioDocumento {
     // Getters and Setters de cada uno d elos atributos de la tabla
 
     public Long getId() {
-        return id;
+        return idUsuario;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setId(Long idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     public String getNombre() {
