@@ -1,4 +1,4 @@
-package mx.utng.finer_back_end.Administrador.Documentos;
+package mx.utng.finer_back_end.Alumnos.Documentos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CursoDetalleDTO {
+public class CursoDetalleAlumnoDTO {
     private String titulo;
     private String descripcion;
     private String instructor;
