@@ -15,4 +15,6 @@ public interface CursoAlumnoService {
     Boolean inscribirseCurso(Integer idUsuario, Integer idCurso);
 
     List<PuntuacionAlumnoDTO> verPuntuacion(Integer idInscripcion);
+
+    String bajaCursoAlumno(Integer idInscripcion);
 }

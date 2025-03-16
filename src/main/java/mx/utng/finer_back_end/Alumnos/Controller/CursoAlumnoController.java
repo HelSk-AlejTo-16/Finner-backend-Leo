@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/cursos/alumno")
@@ -79,7 +80,7 @@ public class CursoAlumnoController {
         }
     }
 
-        @GetMapping("/resultadoEvaluacion/{idInscricpion}")
+    @GetMapping("/resultadoEvaluacion/{idInscricpion}")
     public ResponseEntity<?> verPuntuacion(@PathVariable Integer idInscricpion) {
         try {
             List<PuntuacionAlumnoDTO> puntuacionAlumnoDTOs = cursoService.verPuntuacion(idInscricpion);
@@ -99,6 +100,26 @@ public class CursoAlumnoController {
                     .body("Solicitud incorrecta: " + e.getMessage());
         }
     }
-    
+
+    @GetMapping("bajaCurso/{idInscripcion}")
+    public ResponseEntity<Map<String, Object>> bajaCursoAlumno(@PathVariable Integer idInscripcion) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String bajaCurso = cursoService.bajaCursoAlumno(idInscripcion);
+            response.put("mensaje", bajaCurso);
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            response.put("mensaje", "El ID de inscripción no es válido o no se encuentra en nuestros registros.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar procesar la baja.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Ocurrió un error inesperado.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 
 }
