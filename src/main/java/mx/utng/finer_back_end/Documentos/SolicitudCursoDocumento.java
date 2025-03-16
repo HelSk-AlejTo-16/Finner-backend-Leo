@@ -29,7 +29,7 @@ public class SolicitudCursoDocumento {
     private String descripcion;
 
     @Column(name = "estatus", columnDefinition = "TEXT DEFAULT 'en revision'")
-    private String estatus = "en revision";
+    private String estatus;
 
     @NotNull
     @Column(name = "id_categoria")
