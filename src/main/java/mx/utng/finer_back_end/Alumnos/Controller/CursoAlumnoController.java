@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 
 @RestController
@@ -76,5 +78,27 @@ public class CursoAlumnoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+        @GetMapping("/resultadoEvaluacion/{idInscricpion}")
+    public ResponseEntity<?> verPuntuacion(@PathVariable Integer idInscricpion) {
+        try {
+            List<PuntuacionAlumnoDTO> puntuacionAlumnoDTOs = cursoService.verPuntuacion(idInscricpion);
+
+            if (puntuacionAlumnoDTOs.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No se encontraron puntuaciones para el alumno con la inscripción: " + idInscricpion);
+            }
+
+            return ResponseEntity.ok(puntuacionAlumnoDTOs);
+
+        } catch (DataAccessException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error interno al procesar la solicitud: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Solicitud incorrecta: " + e.getMessage());
+        }
+    }
+    
 
 }

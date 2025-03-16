@@ -1,5 +1,6 @@
 package mx.utng.finer_back_end.Alumnos.Implement;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import mx.utng.finer_back_end.Alumnos.Dao.CursoAlumnoDao;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 
 @Service
@@ -46,4 +48,21 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
         }
     }
     
+
+    @Override
+    @Transactional
+    public List<PuntuacionAlumnoDTO> verPuntuacion(Integer idInscripcion){
+        List<Object[]> puntuacionAlumno =  cursoDao.verPuntuacion(idInscripcion);
+        List<PuntuacionAlumnoDTO> puntuacionAlumnoDTO = new ArrayList<>();
+
+        for(Object[] row: puntuacionAlumno){
+            PuntuacionAlumnoDTO puntacionA = new PuntuacionAlumnoDTO(
+                (Integer) row[0],
+                (Integer) row[1],
+                (BigDecimal) row[2]
+            );
+            puntuacionAlumnoDTO.add(puntacionA);
+        }
+        return puntuacionAlumnoDTO;
+    }
 }
