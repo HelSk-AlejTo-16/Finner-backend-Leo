@@ -1,5 +1,6 @@
 package mx.utng.finer_back_end.Alumnos.Controller;
 
+import org.springframework.http.HttpHeaders;  
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +14,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
-import org.springframework.web.bind.annotation.RequestParam;
+import mx.utng.finer_back_end.Alumnos.Services.PdfGenerationService;
+
+import org.springframework.http.MediaType;
+
 
 @RestController
 @RequestMapping("/api/cursos/alumno")
@@ -24,6 +29,9 @@ public class CursoAlumnoController {
 
     @Autowired
     private CursoAlumnoService cursoService;
+
+    @Autowired
+    private PdfGenerationService pdfGenerationService;
 
     /**
      * Endpoint para obtener los detalles de un curso por su ID.
@@ -121,5 +129,42 @@ public class CursoAlumnoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+@GetMapping("/certificado/{idInscripcion}")
+public ResponseEntity<byte[]> generarCertificado(@PathVariable Integer idInscripcion) {
+    try {
+        CertificadoDetalleDTO certificadoDetalles = cursoService.obtenerDetallesCertificado(idInscripcion);
+
+        if (certificadoDetalles == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(("No se encontraron detalles para el certificado del alumno con la inscripción: " + idInscripcion).getBytes());
+        }
+
+        System.out.println("Detalles del certificado: ");
+        System.out.println("ID Inscripción: " + certificadoDetalles.getIdInscripcion());
+        System.out.println("Nombre Alumno: " + certificadoDetalles.getNombreCompletoAlumno());
+        System.out.println("Curso: " + certificadoDetalles.getTituloCurso());
+        System.out.println("Instructor: " + certificadoDetalles.getNombreInstructor());
+        System.out.println("Fecha Inscripción: " + certificadoDetalles.getFechaInscripcion());
+        System.out.println("Fecha Generación: " + certificadoDetalles.getFechaGeneracion());
+
+        byte[] pdfContent = pdfGenerationService.generarCertificado(certificadoDetalles);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=certificado_" + idInscripcion + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF) 
+                .body(pdfContent); 
+
+    } catch (Exception e) {
+        System.err.println("Error al generar el certificado: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(("Error al generar el certificado: " + e.getMessage()).getBytes());
+    }
+}
+
+
 
 }

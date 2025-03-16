@@ -1,12 +1,14 @@
 package mx.utng.finer_back_end.Alumnos.Implement;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import mx.utng.finer_back_end.Alumnos.Dao.CursoAlumnoDao;
+import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
@@ -66,4 +68,41 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
     public String bajaCursoAlumno(Integer idInscricpion) {
         return cursoDao.bajaCursoAlumno(idInscricpion);
     }
+
+    @Override
+    public CertificadoDetalleDTO obtenerDetallesCertificado(Integer idInscripcion) {
+        List<Object[]> resultados = cursoDao.obtenerDetallesCertificado(idInscripcion);
+        
+        if (resultados != null && !resultados.isEmpty()) {
+            Object[] fila = resultados.get(0);
+            
+            if (fila != null && fila.length >= 8) {
+                try {
+                    CertificadoDetalleDTO certificadoDetalles = new CertificadoDetalleDTO(
+                        (Integer) fila[0], 
+                        (String) fila[1], 
+                        (String) fila[2],  
+                        (String) fila[3], 
+                        (String) fila[4],  
+                        (String) fila[5], 
+                        ((java.sql.Date) fila[6]).toLocalDate(), 
+                        LocalDate.now() 
+                    );
+                    
+                    return certificadoDetalles;
+                } catch (ClassCastException e) {
+                    System.err.println("Error de conversión de tipo: " + e.getMessage());
+                    return null;
+                }
+            } else {
+                System.out.println("La fila no tiene la cantidad de columnas esperada.");
+                return null; 
+            }
+        } else {
+            System.out.println("No se encontraron resultados para la inscripción " + idInscripcion);
+            return null;
+        }
+    }
+    
+
 }
