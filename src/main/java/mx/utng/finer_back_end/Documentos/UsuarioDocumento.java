@@ -16,7 +16,7 @@ public class UsuarioDocumento {
 
     @NotBlank
     @Column(name = "nombre")
-    private String nombre;
+    private String nombre; 
 
     @NotNull
     @Column(name = "id_rol")
