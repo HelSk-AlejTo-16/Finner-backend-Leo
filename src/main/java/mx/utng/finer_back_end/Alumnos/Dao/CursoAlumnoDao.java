@@ -2,7 +2,6 @@ package mx.utng.finer_back_end.Alumnos.Dao;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Documentos.CursoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +24,9 @@ public interface CursoAlumnoDao extends JpaRepository<CursoDocumento, Long> {
 
     @Query(value = "SELECT * FROM calcular_calificacion(:id_inscripcion_param)", nativeQuery = true)
     List<Object[]>  verPuntuacion(@Param("id_inscripcion_param") Integer id_inscripcion_param);
+
+    @Query(value = "SELECT cancelar_inscripcion(:p_id_inscripcion)", nativeQuery = true)
+    String bajaCursoAlumno(@Param("p_id_inscripcion") Integer p_id_inscripcion);
 
 
 }
