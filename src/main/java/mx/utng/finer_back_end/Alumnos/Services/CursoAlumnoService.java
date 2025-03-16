@@ -1,13 +1,15 @@
 package mx.utng.finer_back_end.Alumnos.Services;
 
 import java.util.List;
+
+import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 
 public interface CursoAlumnoService {
     /*
      * Metodo getCurso(idCurso)
-     * idCurso Int 
+     * idCurso Int
      * Return: Obj Curso
      */
     List<CursoDetalleAlumnoDTO> getCurso(Integer idCurso);
@@ -17,4 +19,6 @@ public interface CursoAlumnoService {
     List<PuntuacionAlumnoDTO> verPuntuacion(Integer idInscripcion);
 
     String bajaCursoAlumno(Integer idInscripcion);
+
+    CertificadoDetalleDTO obtenerDetallesCertificado(Integer idInscripcion);
 }
