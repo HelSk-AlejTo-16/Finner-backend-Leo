@@ -12,7 +12,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     private static final String APP_NAME = "Finer-BackEnd";
-    private static final String INSTRUCCIONES = "Utiliza este código para verificar tu acceso.";
+    private static final String INSTRUCCIONES = "Utiliza este código para verificar tu identidad.";
 
     public boolean mandarTokenNumerico(String email, String token) {
         try {
