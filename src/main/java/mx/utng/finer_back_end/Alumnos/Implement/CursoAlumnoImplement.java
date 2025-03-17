@@ -17,7 +17,7 @@ import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 public class CursoAlumnoImplement implements CursoAlumnoService {
 
     @Autowired
-    private CursoAlumnoDao cursoDao;
+    private CursoAlumnoDao cursoDao; 
 
     @Override
     @Transactional

@@ -27,7 +27,6 @@ public class AlumnoInstructorServiceImpl implements AlumnoInstructorService {
             // Usamos Jackson para parsear la respuesta JSON
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode root = objectMapper.readTree(response.getBody());
-            //Aqui podemos agregar más información de la s acciones que puede tener el correo (enviar y recibir correos y más)
             String status = root.path("data").path("status").asText();
 
             return "valid".equals(status); // Comprobamos si el correo es válido
