@@ -16,11 +16,11 @@ public class UsuarioDocumento {
 
     @NotBlank
     @Column(name = "nombre")
-    private String nombre; 
+    private String nombre;
 
     @NotNull
     @Column(name = "id_rol")
-    private Integer idRol; 
+    private Integer idRol;
 
     @Column(name = "apellido_paterno")
     private String apellidoPaterno;
@@ -47,9 +47,9 @@ public class UsuarioDocumento {
     @Column(name = "direccion")
     private String direccion;
 
-    // @Lob
-    // @Column(name = "cedula_pdf")
-    // private byte[] cedulaPdf; // No cambié nada aquí
+    @Lob
+    @Column(name = "cedula_pdf")
+    private byte[] cedulaPdf; // Puedes descomentar esto si es necesario
 
     @Column(name = "activo", columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean activo;
@@ -136,13 +136,13 @@ public class UsuarioDocumento {
         this.direccion = direccion;
     }
 
-    // public byte[] getCedulaPdf() {
-    //     return cedulaPdf;
-    // }
+    public byte[] getCedulaPdf() {
+         return cedulaPdf;
+    }
 
-    // public void setCedulaPdf(byte[] cedulaPdf) {
-    //     this.cedulaPdf = cedulaPdf;
-    // }
+     public void setCedulaPdf(byte[] cedulaPdf) {
+         this.cedulaPdf = cedulaPdf;
+     }
 
     public Boolean getActivo() {
         return activo;
