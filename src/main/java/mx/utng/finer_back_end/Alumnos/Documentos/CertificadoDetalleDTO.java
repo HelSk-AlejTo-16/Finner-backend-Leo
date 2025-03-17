@@ -13,11 +13,10 @@ public class CertificadoDetalleDTO {
     private LocalDate fechaInscripcion;
     private LocalDate fechaGeneracion;
 
-    // Constructor por defecto
+
     public CertificadoDetalleDTO() {
     }
 
-    // Constructor con todos los parámetros
     public CertificadoDetalleDTO(Integer idInscripcion, String nombreCompletoAlumno, String tituloCurso,
             String nombreCategoria, String nombreInstructor, String matricula, LocalDate fechaInscripcion,
             LocalDate fechaGeneracion) {
@@ -31,7 +30,6 @@ public class CertificadoDetalleDTO {
         this.fechaGeneracion = fechaGeneracion;
     }
 
-    // Métodos get y set
 
     public Integer getIdInscripcion() {
         return idInscripcion;

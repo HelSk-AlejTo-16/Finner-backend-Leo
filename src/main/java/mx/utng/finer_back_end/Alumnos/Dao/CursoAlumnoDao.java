@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import mx.utng.finer_back_end.Documentos.CursoDocumento;
+import mx.utng.finer_back_end.Documentos.TemaDocumento;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
@@ -45,6 +47,9 @@ public interface CursoAlumnoDao extends JpaRepository<CursoDocumento, Long> {
                         "INNER JOIN usuario u ON ins.id_usuario_alumno = u.id_usuario " +
                         "WHERE ins.estatus = 'finalizado' AND ins.id_inscripcion = :id_inscripcion " +
                         "LIMIT 1", nativeQuery = true)
-                        List<Object[]> obtenerDetallesCertificado(@Param("id_inscripcion") Integer id_inscripcion);
+        List<Object[]> obtenerDetallesCertificado(@Param("id_inscripcion") Integer id_inscripcion);
+
+        @Query(value = "SELECT * FROM obtener_temas_curso(:p_id_curso)", nativeQuery = true)
+        List<Object[]> getTemas(@Param("p_id_curso") Integer p_id_curso);
 
 }

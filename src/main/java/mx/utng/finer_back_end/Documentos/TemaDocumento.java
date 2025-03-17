@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "tema") //Nombre de la tabla en la BD
+@Table(name = "tema") // Nombre de la tabla en la BD
 public class TemaDocumento {
-    //Campos de la tabla
+    // Campos de la tabla
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_tema")
-    private Long idTema;
+    private Integer idTema;  // Usamos Integer para coincidir con el tipo INTEGER de la tabla
 
     @NotNull
     @Column(name = "id_curso")
@@ -28,13 +28,24 @@ public class TemaDocumento {
     @Column(name = "imagen")
     private byte[] imagen;
 
-    // Getters and Setters de cada uno de los atributos de la tabla
+    // Getters y Setters de cada uno de los atributos de la tabla
+    public TemaDocumento() {
+    }
 
-    public Long getIdTema() {
+    public TemaDocumento(Integer idTema, Integer idCurso, String nombreTema, String contenido, byte[] imagen) {
+        this.idTema = idTema;
+        this.idCurso = idCurso;
+        this.nombreTema = nombreTema;
+        this.contenido = contenido;
+        this.imagen = imagen;
+    }
+    
+
+    public Integer getIdTema() {
         return idTema;
     }
 
-    public void setIdTema(Long idTema) {
+    public void setIdTema(Integer idTema) {
         this.idTema = idTema;
     }
 

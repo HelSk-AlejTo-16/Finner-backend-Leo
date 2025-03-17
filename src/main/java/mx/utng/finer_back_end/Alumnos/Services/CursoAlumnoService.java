@@ -5,6 +5,7 @@ import java.util.List;
 import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
+import mx.utng.finer_back_end.Documentos.TemaDocumento;
 
 public interface CursoAlumnoService {
     /*
@@ -21,4 +22,6 @@ public interface CursoAlumnoService {
     String bajaCursoAlumno(Integer idInscripcion);
 
     CertificadoDetalleDTO obtenerDetallesCertificado(Integer idInscripcion);
+
+    List<TemaDocumento> getTemas(Integer idCurso);
 }

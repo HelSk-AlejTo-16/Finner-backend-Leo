@@ -12,12 +12,14 @@ import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
+import mx.utng.finer_back_end.Documentos.TemaDocumento;
+
 
 @Service
 public class CursoAlumnoImplement implements CursoAlumnoService {
 
     @Autowired
-    private CursoAlumnoDao cursoDao; 
+    private CursoAlumnoDao cursoDao;
 
     @Override
     @Transactional
@@ -72,23 +74,22 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
     @Override
     public CertificadoDetalleDTO obtenerDetallesCertificado(Integer idInscripcion) {
         List<Object[]> resultados = cursoDao.obtenerDetallesCertificado(idInscripcion);
-        
+
         if (resultados != null && !resultados.isEmpty()) {
             Object[] fila = resultados.get(0);
-            
+
             if (fila != null && fila.length >= 8) {
                 try {
                     CertificadoDetalleDTO certificadoDetalles = new CertificadoDetalleDTO(
-                        (Integer) fila[0], 
-                        (String) fila[1], 
-                        (String) fila[2],  
-                        (String) fila[3], 
-                        (String) fila[4],  
-                        (String) fila[5], 
-                        ((java.sql.Date) fila[6]).toLocalDate(), 
-                        LocalDate.now() 
-                    );
-                    
+                            (Integer) fila[0],
+                            (String) fila[1],
+                            (String) fila[2],
+                            (String) fila[3],
+                            (String) fila[4],
+                            (String) fila[5],
+                            ((java.sql.Date) fila[6]).toLocalDate(),
+                            LocalDate.now());
+
                     return certificadoDetalles;
                 } catch (ClassCastException e) {
                     System.err.println("Error de conversión de tipo: " + e.getMessage());
@@ -96,13 +97,29 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
                 }
             } else {
                 System.out.println("La fila no tiene la cantidad de columnas esperada.");
-                return null; 
+                return null;
             }
         } else {
             System.out.println("No se encontraron resultados para la inscripción " + idInscripcion);
             return null;
         }
     }
-    
+
+    public List<TemaDocumento> getTemas(Integer idCurso) {
+        List<Object[]> result = cursoDao.getTemas(idCurso);
+        List<TemaDocumento> temas = new ArrayList<>();
+
+        for (Object[] row : result) {
+            TemaDocumento tema = new TemaDocumento(
+                    (Integer) row[0],
+                    (Integer) idCurso,
+                    (String) row[1],
+                    (String) row[2],
+                    (byte[]) row[3]
+                    );
+            temas.add(tema);
+        }
+        return temas;
+    }
 
 }
