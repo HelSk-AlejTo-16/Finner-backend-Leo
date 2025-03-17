@@ -109,7 +109,11 @@
         <artifactId>jakarta.mail-api</artifactId>
 		<version>1.6.5</version> <!-- O la última versión disponible -->    
 	</dependency>
+
+
+
 </dependencies>
+
 
 	<build>
 		<plugins>
