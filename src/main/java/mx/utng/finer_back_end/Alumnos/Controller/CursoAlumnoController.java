@@ -17,9 +17,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.CursoNombreAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Implement.CursoAlumnoImplement;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 import mx.utng.finer_back_end.Alumnos.Services.PdfGenerationService;
+import mx.utng.finer_back_end.Documentos.CursoDocumento;
 import mx.utng.finer_back_end.Documentos.TemaDocumento;
 
 import org.springframework.http.MediaType;
@@ -30,6 +33,9 @@ public class CursoAlumnoController {
 
     @Autowired
     private CursoAlumnoService cursoService;
+
+    @Autowired
+    private CursoAlumnoImplement cursoAlumnoService;
 
     @Autowired
     private PdfGenerationService pdfGenerationService;
@@ -258,6 +264,20 @@ public class CursoAlumnoController {
             throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error inesperado", e);
+        }
+    }
+
+
+    @GetMapping("/curso/{nombreCurso}")
+    public ResponseEntity<?> buscarCursoNombre(@PathVariable String nombreCurso) {
+        try {
+            List<CursoNombreAlumnoDTO> cursos = cursoAlumnoService.getCurso(nombreCurso);
+            if (cursos.isEmpty()) {
+                return ResponseEntity.status(404).body("Curso no encontrado");
+            }
+            return ResponseEntity.ok(cursos);  // Si se encuentran cursos, retornamos los datos
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error en la conexión: " + e.getMessage());
         }
     }
 
