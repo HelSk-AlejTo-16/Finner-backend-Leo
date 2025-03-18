@@ -19,7 +19,7 @@ public class TemaService {
      * 
      */
     public ResponseEntity<String> registrarTema(int idSolicitudCurso, String nombreTema, String contenido,
-                                    byte imagen) {
+                                    byte[] imagen) {
 
     try{
         String sql = "SELECT agregar_tema_solicitud(?,?,?,?)";
