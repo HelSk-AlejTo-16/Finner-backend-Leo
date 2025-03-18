@@ -12,41 +12,34 @@ import mx.utng.finer_back_end.Instructor.Services.TemaService;
 @RestController
 @RequestMapping("/api/tema")
 public class TemaController {
-    
+
     @Autowired
     private TemaService temaService;
+
     /**
-     *@param idSolicitudCurso /int/ 
-     * @param nombreTema /char/
-     * @param contenido /String/
-     * @param imagen /byte/
+     * @param idSolicitudCurso /int/
+     * @param nombreTema       /char/
+     * @param contenido        /String/
+     * @param imagen           /byte/
      * @return mensaje de éxito o error
      * 
      * 
      * 
      * 
      */
-     @PostMapping("/crear-tema")
-    public ResponseEntity <String> crearTema(
-                                            @RequestParam int idSolicitudCurso,
-                                            @RequestParam  String nombreTema,
-                                            @RequestParam  String contenido,
-                                            @RequestParam byte[] imagen){
+    @PostMapping("/crear-tema")
+    public ResponseEntity<String> crearTema(
+            @RequestParam int idSolicitudCurso,
+            @RequestParam String nombreTema,
+            @RequestParam String contenido,
+            @RequestParam byte[] imagen) {
 
-        try{
+        try {
             ResponseEntity<String> mensaje = temaService.registrarTema(idSolicitudCurso, nombreTema, contenido, imagen);
             return mensaje;
-        }catch(Exception e){
-            return ResponseEntity.status(500).body("Error de conexión"+e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error de conexión" + e.getMessage());
         }
-                                            }
-
-    
-
-
-
-
-
-
+    }
 
 }
