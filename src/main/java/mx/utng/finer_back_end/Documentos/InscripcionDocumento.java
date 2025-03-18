@@ -21,7 +21,7 @@ public class InscripcionDocumento {
     private Long idInscripcion;
 
     // Campo: id_curso 
-    @NotNull
+    @NotNull  
     @Column(name = "id_curso")
     private Integer idCurso;
 
