@@ -5,18 +5,25 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import mx.utng.finer_back_end.Alumnos.Dao.CursoAlumnoDao;
 import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
-import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.CursoNombreAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO; 
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
+import mx.utng.finer_back_end.Documentos.CursoDocumento;
 import mx.utng.finer_back_end.Documentos.TemaDocumento;
 
 
 @Service
 public class CursoAlumnoImplement implements CursoAlumnoService {
+
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private CursoAlumnoDao cursoDao;
@@ -120,6 +127,27 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
             temas.add(tema);
         }
         return temas;
+    }
+
+
+    /**
+     * Método que busca cursos por nombre utilizando la función PL/pgSQL
+     * @param nombreCurso Nombre del curso a buscar
+     * @return Lista de cursos encontrados
+     */
+    public List<CursoNombreAlumnoDTO> getCurso(String nombreCurso) {
+        String sql = "SELECT * FROM filtrar_cursos_nombre(?)";  // Llamamos la función PL/pgSQL
+        return jdbcTemplate.query(sql, new Object[]{nombreCurso}, (rs, rowNum) -> {
+            // Mapeo del resultado de la consulta a un objeto CursoDocumento
+            CursoNombreAlumnoDTO curso = new CursoNombreAlumnoDTO();
+            curso.setTituloCurso(rs.getString("titulo_curso"));
+            curso.setDescripcion(rs.getString("descripcion"));
+            curso.setNombreInstructor(rs.getString("nombre_instructor"));
+            curso.setApellidoPaterno(rs.getString("apellido_paterno"));
+            curso.setApellidoMaterno(rs.getString("apellido_materno"));
+            curso.setNombreCategoria(rs.getString("nombre_categoria"));
+            return curso;
+        });
     }
 
 }
