@@ -19,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/solicitud-categoria")
-public class SolicitudCategoriaController {
+public class SolicitudCategoriaInstructorController {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
