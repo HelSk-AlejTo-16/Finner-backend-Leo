@@ -1,6 +1,6 @@
 package mx.utng.finer_back_end.Instructor.Controller;
-
 import mx.utng.finer_back_end.Instructor.Services.InstructorService;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +48,6 @@ public class InstructorController {
             return ResponseEntity.status(500).body("Error de conexión: " + e.getMessage());
         }
     }
+
     
 }
