@@ -1,17 +1,23 @@
 package mx.utng.finer_back_end.Documentos;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "solicitud_curso") // Nombre de la tabla
+@Table(name = "solicitudcurso") // Nombre de la tabla
 public class SolicitudCursoDocumento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_solicitud_curso")
     private Long idSolicitudCurso;
+
+    @NotNull
+    @Column(name = "fecha_solicitud")
+    private LocalDate fechaSolicitud;
 
     @NotNull
     @Column(name = "id_usuario_instructor")
@@ -46,6 +52,14 @@ public class SolicitudCursoDocumento {
 
     public void setIdSolicitudCurso(Long idSolicitudCurso) {
         this.idSolicitudCurso = idSolicitudCurso;
+    }
+
+    public LocalDate getFechaSolicitud() {
+        return fechaSolicitud;
+    }
+
+    public void setFechaSolicitud(LocalDate fechaSolicitud) {
+        this.fechaSolicitud = fechaSolicitud;
     }
 
     public Integer getIdUsuarioInstructor() {
