@@ -38,30 +38,4 @@ public class AlumnoController {
             return ResponseEntity.status(500).body("Error de conexión: " + e.getMessage());
         }
     }
-    
-     /**
-     * Este método permite actualizar la contraseña de un alumno utilizando su correo electrónico.
-     * 
-     * @param correo          Correo electrónico del alumno
-     * @param nuevaContrasenia Nueva contraseña del alumno
-     * @return ResponseEntity<String> con el mensaje de éxito o error
-     */
-    @PutMapping("/actualizar-contrasenia")
-    public ResponseEntity<String> actualizarContrasenia(
-            @RequestParam String correo,
-            @RequestParam String nuevaContrasenia) {
-        try {
-            String resultado = alumnoService.actualizarContrasenia(correo, nuevaContrasenia);
-            return ResponseEntity.ok(resultado);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error al actualizar la contraseña: " + e.getMessage());
-        }
-    }
-
-
-    
-
-
-
-
 }
