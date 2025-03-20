@@ -23,7 +23,7 @@ public class CursoVerControllerInstructor {
     private CursoVerServiceInstructor cursoVerService;
 
      /**
-     * Endpoint para obtener todos los cursos de un instructor (aprobados y solicitudes).
+     * Endpoint para obtener todos los cursos de un instructor (aprobados y solicitudes) ..
      *
      * @param idInstructor identificador del instructor.
      * @return ResponseEntity con la lista de cursos o mensaje de error.
