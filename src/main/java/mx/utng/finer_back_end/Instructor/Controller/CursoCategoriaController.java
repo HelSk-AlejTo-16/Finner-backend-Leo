@@ -3,13 +3,12 @@ package mx.utng.finer_back_end.Instructor.Controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import mx.utng.finer_back_end.Instructor.Documentos.CorreccionCursoDTO;
 import mx.utng.finer_back_end.Instructor.Documentos.CursoDetalleCategoriaDTO;
 import mx.utng.finer_back_end.Instructor.Services.CursoCategoriaService;
 
