@@ -1,14 +1,21 @@
 package mx.utng.finer_back_end.Administrador.Implement;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
-
+import java.util.Map;
 @Service
 public class AdministradorServiceImpl implements AdministradorService {
 
@@ -17,6 +24,9 @@ public class AdministradorServiceImpl implements AdministradorService {
     
     @Autowired
     private JavaMailSender javaMailSender;
+
+    private final String API_KEY = "fb9a6eb9-05c4-4c7f-8b5b-9900053358cb";
+    private final String API_URL = "https://api.apis.net.mx/v1/cedulaprofesional/";
 
     /**
      * {@inheritDoc}
@@ -154,4 +164,122 @@ public class AdministradorServiceImpl implements AdministradorService {
             return "Error al crear la solicitud de categoría: " + e.getMessage();
         }
     }
-}  // Make sure this closing brace is correct
+
+    //bloquearUsuario
+
+     /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public String bloquearUsuario(String nombreUsuario) {
+        try {
+            // Llamar a la función de PostgreSQL para bloquear al usuario
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT bloquear_usuario(?)", 
+                String.class, 
+                nombreUsuario
+            );
+            
+            return resultado;
+        } catch (Exception e) {
+            // Manejar cualquier excepción que pueda ocurrir
+            e.printStackTrace(); // Para ver el error completo en los logs
+            return "Error al bloquear al usuario: " + e.getMessage();
+        } 
+    }
+
+    //getUsuario
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUsuario(String nombreUsuario) {
+        try {
+            // Consultar los datos del usuario
+            Map<String, Object> usuario = jdbcTemplate.queryForMap(
+                "SELECT u.*, r.rol " +
+                "FROM Usuario u " +
+                "JOIN Rol r ON u.id_rol = r.id_rol " +
+                "WHERE u.nombre_usuario = ?",
+                nombreUsuario
+            );
+
+            // Si el usuario tiene número de cédula, validarla
+            if (usuario.containsKey("numero_cedula") && usuario.get("numero_cedula") != null) {
+                String numeroCedula = usuario.get("numero_cedula").toString();
+                Map<String, Object> datosCedula = validarCedulaProfesional(numeroCedula);
+                usuario.put("datos_cedula", datosCedula);
+            }
+
+            return usuario;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error al obtener los datos del usuario: " + e.getMessage());
+            return error;
+        }
+    }
+
+    /**
+     * Valida una cédula profesional utilizando la API externa.
+     * 
+     * @param numeroCedula Número de cédula a validar
+     * @return Map con la información de la cédula profesional
+     */
+    private Map<String, Object> validarCedulaProfesional(String numeroCedula) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Api-Key", API_KEY);
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(
+                API_URL + numeroCedula,
+                HttpMethod.GET,
+                entity,
+                Map.class
+            );
+            
+            return response.getBody();
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error al validar la cédula profesional: " + e.getMessage());
+            return error;
+        }
+    }
+
+     /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
+        try {
+            // Preparar el término de búsqueda para SQL LIKE
+            String termino = "%" + busqueda.toLowerCase() + "%";
+            
+            // Realizar la búsqueda en la base de datos
+            return jdbcTemplate.queryForList(
+                "SELECT u.*, r.rol " +
+                "FROM Usuario u " +
+                "JOIN Rol r ON u.id_rol = r.id_rol " +
+                "WHERE LOWER(u.nombre) LIKE ? " +
+                "   OR LOWER(u.apellido_paterno) LIKE ? " +
+                "   OR LOWER(u.apellido_materno) LIKE ?",
+                termino, termino, termino
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Retornar lista vacía en caso de error
+            return new ArrayList<>();
+        }
+    }
+
+
+
+
+}  

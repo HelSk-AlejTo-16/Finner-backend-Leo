@@ -2,14 +2,16 @@ package mx.utng.finer_back_end.Administrador.Controller;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
@@ -204,4 +206,159 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    /**
+     * Endpoint para bloquear a un usuario en el sistema.
+     * 
+     * Este método cambia el rol de un usuario a 'bloqueado', lo que impide que pueda
+     * realizar acciones en el sistema. Si el usuario ya está bloqueado o no existe,
+     * se retorna el mensaje correspondiente.
+     *
+     * @param obj Objeto que contiene el nombre de usuario a bloquear
+     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Usuario bloqueado correctamente.
+     *         - `404 Not Found`: Si no se encuentra el usuario.
+     *         - `400 Bad Request`: Si faltan datos requeridos.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar el bloqueo.
+     */
+    @PostMapping("/bloquearUsuario")
+    public ResponseEntity<Map<String, Object>> bloquearUsuario(@RequestBody Map<String, Object> obj) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Extraer el nombre de usuario del objeto recibido
+            String nombreUsuario = (String) obj.get("nombreUsuario");
+            
+            // Validar que el nombre de usuario esté presente
+            if (nombreUsuario == null || nombreUsuario.isEmpty()) {
+                response.put("mensaje", "El nombre de usuario es obligatorio");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Llamar al servicio para bloquear al usuario
+            String resultado = administradorService.bloquearUsuario(nombreUsuario);
+            
+            // Verificar el resultado
+            if (resultado.equals("Usuario no encontrado.")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            } else if (resultado.equals("Usuario bloqueado exitosamente.")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.ok(response);
+            } else if (resultado.equals("El usuario ya está bloqueado.")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar bloquear al usuario");
+            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Error al procesar la solicitud");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+       
+    }
+
+
+      /**
+     * Endpoint para obtener los datos completos de un usuario.
+     * 
+     * Este método consulta toda la información relacionada con un usuario, incluyendo
+     * sus datos personales, rol y validación de cédula profesional. La información
+     * de la cédula se valida a través de una API externa.
+     *
+     * @param nombreUsuario Nombre del usuario a consultar
+     * @return ResponseEntity con la información completa del usuario o mensaje de error
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Datos del usuario encontrados correctamente.
+     *         - `404 Not Found`: Si no se encuentra el usuario.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la consulta.
+     */
+    @GetMapping("/getUsuario")
+    public ResponseEntity<Map<String, Object>> getUsuario(@RequestParam String nombreUsuario) {
+        try {
+            Map<String, Object> resultado = administradorService.getUsuario(nombreUsuario);
+            
+            if (resultado.containsKey("error")) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(resultado);
+            }
+            
+            if (resultado.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("mensaje", "Usuario no encontrado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(response);
+            }
+            
+            return ResponseEntity.ok(resultado);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al obtener los datos del usuario");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
+        }
+    }
+
+     /**
+     * Endpoint para buscar usuarios por coincidencia en nombre o apellidos.
+     * 
+     * Este método busca usuarios cuyo nombre, apellido paterno o apellido materno
+     * coincida parcialmente con el término de búsqueda proporcionado. La búsqueda
+     * no distingue entre mayúsculas y minúsculas.
+     *
+     * @param obj Objeto que cont
+     * @return ResponseEntity con la lista de usuarios encontrados o mensaje de error
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Búsqueda realizada correctamente (con o sin resultados).
+     *         - `400 Bad Request`: Si el término de búsqueda está vacío.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la búsqueda.
+     */
+    @PostMapping("/buscarUsuarioNombre")
+    public ResponseEntity<Map<String, Object>> buscarUsuarioNombre(@RequestBody Map<String, Object> obj) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String busqueda = (String) obj.get("busqueda");
+            
+            // Validar que el término de búsqueda esté presente
+            if (busqueda == null || busqueda.trim().isEmpty()) {
+                response.put("mensaje", "El término de búsqueda es obligatorio");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Realizar la búsqueda
+            List<Map<String, Object>> usuarios = administradorService.buscarUsuarioNombre(busqueda.trim());
+            
+            // Preparar la respuesta
+            if (usuarios.isEmpty()) {
+                response.put("mensaje", "No se encontraron usuarios que coincidan con la búsqueda");
+                response.put("usuarios", usuarios);
+            } else {
+                response.put("mensaje", "Usuarios encontrados");
+                response.put("usuarios", usuarios);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("mensaje", "Error al buscar usuarios");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+
 }
