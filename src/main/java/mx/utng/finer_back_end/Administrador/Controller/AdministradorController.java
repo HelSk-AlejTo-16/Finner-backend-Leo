@@ -2,18 +2,20 @@ package mx.utng.finer_back_end.Administrador.Controller;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import mx.utng.finer_back_end.Administrador.DTO.CategoriaDTO;
@@ -29,41 +31,21 @@ public class AdministradorController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    /**
-     * Endpoint para eliminar un alumno de un curso específico.
-     * 
-     * Este método verifica si el alumno seleccionado está inscrito en algún curso.
-     * En caso de que lo esté, permite su eliminación del curso. Para lograrlo, se elimina
-     * el registro correspondiente en la tabla de inscripciones, utilizando la matrícula
-     * y el id del curso como referencia. Como resultado, el alumno queda desvinculado del curso.
-     *
-     * @param obj Objeto que contiene la matrícula del alumno (matricula) y el ID del curso (idCurso)
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     * 
-     *         Posibles respuestas:
-     *         - `200 OK`: Eliminación completada correctamente.
-     *         - `404 Not Found`: Si el alumno no está inscrito en el curso.
-     *         - `500 Internal Server Error`: Si ocurre un error al procesar la eliminación.
-     */
     @PostMapping("/eliminarCursoAlumno")
     public ResponseEntity<Map<String, Object>> eliminarCursoAlumno(@RequestBody Map<String, Object> obj) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Extraer los valores del objeto recibido
             String matricula = (String) obj.get("matricula");
             Integer idCurso = Integer.parseInt(obj.get("idCurso").toString());
             
-            // Validar que los datos necesarios estén presentes
             if (matricula == null || matricula.isEmpty() || idCurso == null) {
                 response.put("mensaje", "La matrícula y el ID del curso son obligatorios");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para eliminar al alumno del curso
             String resultado = administradorService.eliminarAlumnoCurso(matricula, idCurso);
             
-            // Verificar el resultado
             if (resultado.equals("El alumno no está inscrito en este curso.")) {
                 response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -89,45 +71,24 @@ public class AdministradorController {
         }
     }
 
-    /**
-     * Endpoint para rechazar una solicitud de curso.
-     * 
-     * Este método permite al administrador rechazar un curso de los que están listados
-     * para revisión. Al rechazar el curso, se cambia su estatus a 'rechazado' en la base
-     * de datos y se envía un correo al instructor con el mensaje correspondiente.
-     *
-     * @param obj Objeto que contiene el ID de la solicitud de curso (idSolicitudCurso),
-     *            el correo del instructor (correoInstructor) y el motivo del rechazo (motivoRechazo)
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     * 
-     *         Posibles respuestas:
-     *         - `200 OK`: Rechazo completado correctamente.
-     *         - `404 Not Found`: Si no se encuentra la solicitud de curso.
-     *         - `400 Bad Request`: Si faltan datos requeridos.
-     *         - `500 Internal Server Error`: Si ocurre un error al procesar el rechazo.
-     */
     @PostMapping("/rechazarCurso")
     public ResponseEntity<Map<String, Object>> rechazarCurso(@RequestBody Map<String, Object> obj) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Extraer los valores del objeto recibido
             Long idSolicitudCurso = Long.parseLong(obj.get("idSolicitudCurso").toString());
             String correoInstructor = (String) obj.get("correoInstructor");
             String motivoRechazo = (String) obj.get("motivoRechazo");
             String tituloCurso = (String) obj.get("tituloCurso");
             
-            // Validar que los datos necesarios estén presentes
             if (idSolicitudCurso == null || correoInstructor == null || correoInstructor.isEmpty() || 
                 motivoRechazo == null || motivoRechazo.isEmpty() || tituloCurso == null || tituloCurso.isEmpty()) {
                 response.put("mensaje", "El ID de la solicitud, el correo del instructor, el título del curso y el motivo del rechazo son obligatorios");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para rechazar el curso
             String resultado = administradorService.rechazarCurso(idSolicitudCurso, correoInstructor, motivoRechazo, tituloCurso);
             
-            // Verificar el resultado
             if (resultado.equals("No se encontraron datos")) {
                 response.put("mensaje", "No se encontró la solicitud de curso con el ID proporcionado");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -153,44 +114,24 @@ public class AdministradorController {
         }
     }
 
-    /**
-     * Endpoint para solicitar la creación de una nueva categoría.
-     * 
-     * Este método se usa para registrar una nueva solicitud de categoría. Recibe los datos
-     * necesarios como el ID del instructor, ID del administrador, nombre de la categoría y
-     * descripción. La solicitud es procesada y almacenada en la tabla SolicitudCategoria.
-     *
-     * @param obj Objeto que contiene los datos de la solicitud (idUsuarioInstructor, 
-     *            idUsuarioAdmin, nombreCategoria, descripcion)
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     * 
-     *         Posibles respuestas:
-     *         - `201 Created`: Solicitud creada correctamente.
-     *         - `400 Bad Request`: Si faltan datos requeridos.
-     *         - `500 Internal Server Error`: Si ocurre un error al procesar la solicitud.
-     */
     @PostMapping("/crearCategoria")
     public ResponseEntity<Map<String, Object>> crearCategoria(@RequestBody Map<String, Object> obj) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Extraer los valores del objeto recibido
             Integer idUsuarioInstructor = Integer.parseInt(obj.get("idUsuarioInstructor").toString());
             Integer idUsuarioAdmin = Integer.parseInt(obj.get("idUsuarioAdmin").toString());
             String nombreCategoria = (String) obj.get("nombreCategoria");
             String descripcion = (String) obj.get("descripcion");
             
-            // Validar que los datos necesarios estén presentes
             if (idUsuarioInstructor == null || idUsuarioAdmin == null || 
                 nombreCategoria == null || nombreCategoria.isEmpty()) {
                 response.put("mensaje", "El ID del instructor, ID del administrador y nombre de la categoría son obligatorios");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para crear la solicitud de categoría
             String resultado = administradorService.crearCategoria(idUsuarioInstructor, idUsuarioAdmin, nombreCategoria, descripcion);
             
-            // Verificar el resultado - MODIFICADO PARA RECONOCER EL MENSAJE DE ÉXITO CORRECTO
             if (resultado.contains("enviada correctamente")) {
                 response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -213,39 +154,18 @@ public class AdministradorController {
         }
     }
 
-    /**
-     * Endpoint para modificar la descripción de una categoría existente.
-     * 
-     * Este método permite realizar actualizaciones parciales sin necesidad de modificar 
-     * todos los campos de la entidad, facilitando cambios rápidos y precisos solo en 
-     * atributos específicos. Recibe el identificador de la categoría y un DTO con los 
-     * datos a actualizar.
-     *
-     * @param id ID de la categoría a modificar
-     * @param categoriaDTO Objeto DTO que contiene la nueva descripción
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     * 
-     *         Posibles respuestas:
-     *         - `200 OK`: Modificación completada correctamente.
-     *         - `404 Not Found`: Si no se encuentra la categoría con el ID proporcionado.
-     *         - `400 Bad Request`: Si faltan datos requeridos.
-     *         - `500 Internal Server Error`: Si ocurre un error al procesar la modificación.
-     */
     @PutMapping("/modificarCategoria/{id}")
     public ResponseEntity<Map<String, Object>> modificarCategoria(@PathVariable Integer id, @RequestBody CategoriaDTO categoriaDTO) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Validar que los datos necesarios estén presentes
             if (id == null || categoriaDTO.getDescripcion() == null || categoriaDTO.getDescripcion().isEmpty()) {
                 response.put("mensaje", "El ID de la categoría y la descripción son obligatorios");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para modificar la descripción de la categoría
             String resultado = administradorService.modificarCategoriaDescripcion(id, categoriaDTO.getDescripcion());
             
-            // Verificar el resultado
             if (resultado.contains("Error: La categoría no existe")) {
                 response.put("mensaje", "No se encontró la categoría con el ID proporcionado");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -271,42 +191,27 @@ public class AdministradorController {
         }
     }
 
-    /**
-     * Endpoint para eliminar una categoría existente.
-     * 
-     * Este método elimina una categoría de la base de datos. Antes de eliminar,
-     * verifica que no sea la categoría predeterminada y reasigna los cursos y 
-     * solicitudes asociados a la categoría "Sin elegir".
-     *
-     * @param id ID de la categoría a eliminar
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     */
     @DeleteMapping("/borrarCategoria/{id}")
     public ResponseEntity<Map<String, Object>> borrarCategoria(@PathVariable Integer id) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Validar que el ID no sea nulo
             if (id == null) {
                 response.put("mensaje", "El ID de la categoría es obligatorio");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Validar que no se intente eliminar la categoría predeterminada
             if (id == 0) {
                 response.put("mensaje", "No se puede eliminar la categoría predeterminada 'Sin elegir'");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para eliminar la categoría
             Boolean resultado = administradorService.eliminarCategoria(id);
             
-            // Verificar el resultado
             if (resultado) {
                 response.put("mensaje", "Categoría eliminada correctamente");
                 return ResponseEntity.ok(response);
             } else {
-                // Verificar si la categoría existe
                 Integer count = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?", 
                     Integer.class, 
@@ -336,40 +241,20 @@ public class AdministradorController {
         }
     }
 
-    /**
-     * Endpoint para aprobar una solicitud de curso.
-     * 
-     * Este método permite al administrador aprobar cursos que los instructores hayan creado,
-     * asegurando que cumplen con la estructura requerida. Al aprobarlo actualizará el estatus
-     * de la tabla SolicitudCurso a "Aprobado" y se creará el curso.
-     *
-     * @param obj Objeto que contiene el ID de la solicitud de curso (idSolicitudCurso)
-     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
-     * 
-     *         Posibles respuestas:
-     *         - `200 OK`: Aprobación completada correctamente.
-     *         - `404 Not Found`: Si no se encuentra la solicitud de curso.
-     *         - `400 Bad Request`: Si la solicitud no está en estado de revisión.
-     *         - `500 Internal Server Error`: Si ocurre un error al procesar la aprobación.
-     */
     @PostMapping("/aprobarCurso")
     public ResponseEntity<Map<String, Object>> aprobarCurso(@RequestBody Map<String, Object> obj) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Extraer los valores del objeto recibido
             Integer idSolicitudCurso = Integer.parseInt(obj.get("idSolicitudCurso").toString());
             
-            // Validar que los datos necesarios estén presentes
             if (idSolicitudCurso == null) {
                 response.put("mensaje", "El ID de la solicitud de curso es obligatorio");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
-            // Llamar al servicio para aprobar el curso
             String resultado = administradorService.aprobarCurso(idSolicitudCurso);
             
-            // Verificar el resultado
             if (resultado.contains("no existe")) {
                 response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -397,4 +282,5 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
 }
