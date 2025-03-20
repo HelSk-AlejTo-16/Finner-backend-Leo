@@ -21,7 +21,30 @@ public interface AdministradorService {
      * @return Mensaje indicando el resultado de la operación
      */
     String rechazarCurso(Long idSolicitudCurso, String correoInstructor, String motivoRechazo, String tituloCurso);
+/**
+ * Aprueba una solicitud de curso.
+ * 
+ * @param idSolicitudCurso ID de la solicitud de curso a aprobar
+ * @return Mensaje con el resultado de la operación
+ */
+String aprobarCurso(Integer idSolicitudCurso);    
+    // Add this method to the interface
+    /**
+     * Modifica la descripción de una categoría existente.
+     * 
+     * @param idCategoria ID de la categoría a modificar
+     * @param nuevaDescripcion Nueva descripción para la categoría
+     * @return Mensaje indicando el resultado de la operación
+     */
+    String modificarCategoriaDescripcion(Integer idCategoria, String nuevaDescripcion);
     
-    // Add this method to your AdministradorService interface
     String crearCategoria(Integer idUsuarioInstructor, Integer idUsuarioAdmin, String nombreCategoria, String descripcion);
+    
+    /**
+     * Elimina una categoría existente.
+     * 
+     * @param idCategoria ID de la categoría a eliminar
+     * @return true si la eliminación fue exitosa, false en caso contrario
+     */
+    Boolean eliminarCategoria(Integer idCategoria);
 }
