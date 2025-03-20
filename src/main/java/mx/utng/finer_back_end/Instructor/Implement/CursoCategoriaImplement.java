@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.jdbc.core.JdbcTemplate;
+
 import mx.utng.finer_back_end.Instructor.Dao.CursoCategoriaDao;
 import mx.utng.finer_back_end.Instructor.Documentos.CursoDetalleCategoriaDTO;
 import mx.utng.finer_back_end.Instructor.Services.CursoCategoriaService;
@@ -13,9 +13,6 @@ import mx.utng.finer_back_end.Instructor.Services.CursoCategoriaService;
 public class CursoCategoriaImplement implements CursoCategoriaService{
      @Autowired
     private CursoCategoriaDao cursoCategoriaDao;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @Override
     public List<CursoDetalleCategoriaDTO> filtrarCursoCategoria(String busqueda) {

@@ -7,13 +7,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import mx.utng.finer_back_end.Administrador.DTO.CategoriaDTO;
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 
 @RestController
@@ -22,6 +27,9 @@ public class AdministradorController {
 
     @Autowired
     private AdministradorService administradorService;
+    
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     /**
      * Endpoint para eliminar un alumno de un curso específico.
@@ -82,7 +90,7 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
+
     /**
      * Endpoint para rechazar una solicitud de curso.
      * 
@@ -146,7 +154,7 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
+
     /**
      * Endpoint para solicitar la creación de una nueva categoría.
      * 
@@ -208,6 +216,190 @@ public class AdministradorController {
     }
 
     /**
+     * Endpoint para modificar la descripción de una categoría existente.
+     * 
+     * Este método permite realizar actualizaciones parciales sin necesidad de modificar 
+     * atributos específicos. Recibe el identificador de la categoría y un DTO con los 
+     * datos a actualizar.
+     *
+     * @param id ID de la categoría a modificar
+     * @param categoriaDTO Objeto DTO que contiene la nueva descripción
+     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Modificación completada correctamente.
+     *         - `404 Not Found`: Si no se encuentra la categoría con el ID proporcionado.
+     *         - `400 Bad Request`: Si faltan datos requeridos.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la modificación.
+     */
+    @PutMapping("/modificarCategoria/{id}")
+    public ResponseEntity<Map<String, Object>> modificarCategoria(@PathVariable Integer id, @RequestBody CategoriaDTO categoriaDTO) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Validar que los datos necesarios estén presentes
+            if (id == null || categoriaDTO.getDescripcion() == null || categoriaDTO.getDescripcion().isEmpty()) {
+                response.put("mensaje", "El ID de la categoría y la descripción son obligatorios");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Llamar al servicio para modificar la descripción de la categoría
+            String resultado = administradorService.modificarCategoriaDescripcion(id, categoriaDTO.getDescripcion());
+            
+            // Verificar el resultado
+            if (resultado.contains("Error: La categoría no existe")) {
+                response.put("mensaje", "No se encontró la categoría con el ID proporcionado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            } else if (resultado.contains("actualizada exitosamente")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar modificar la categoría");
+            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (NumberFormatException e) {
+            response.put("mensaje", "El ID de la categoría debe ser un número entero válido");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Error al procesar la solicitud");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Endpoint para eliminar una categoría existente.
+     * 
+     * Este método elimina una categoría de la base de datos. Antes de eliminar,
+     * verifica que no sea la categoría predeterminada y reasigna los cursos y 
+     * solicitudes asociados a la categoría "Sin elegir".
+     *
+     * @param id ID de la categoría a eliminar
+     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
+     */
+    @DeleteMapping("/borrarCategoria/{id}")
+    public ResponseEntity<Map<String, Object>> borrarCategoria(@PathVariable Integer id) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Validar que el ID no sea nulo
+            if (id == null) {
+                response.put("mensaje", "El ID de la categoría es obligatorio");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Validar que no se intente eliminar la categoría predeterminada
+            if (id == 0) {
+                response.put("mensaje", "No se puede eliminar la categoría predeterminada 'Sin elegir'");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Llamar al servicio para eliminar la categoría
+            Boolean resultado = administradorService.eliminarCategoria(id);
+            
+            // Verificar el resultado
+            if (resultado) {
+                response.put("mensaje", "Categoría eliminada correctamente");
+                return ResponseEntity.ok(response);
+            } else {
+                // Verificar si la categoría existe
+                Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?", 
+                    Integer.class, 
+                    id
+                );
+                
+                if (count != null && count == 0) {
+                    response.put("mensaje", "No se encontró la categoría con el ID proporcionado");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                } else {
+                    response.put("mensaje", "No se pudo eliminar la categoría. Puede estar siendo utilizada por otros registros.");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                }
+            }
+            
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar eliminar la categoría");
+            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (NumberFormatException e) {
+            response.put("mensaje", "El ID de la categoría debe ser un número entero válido");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Error al procesar la solicitud");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Endpoint para aprobar una solicitud de curso.
+     * 
+     * Este método permite al administrador aprobar cursos que los instructores hayan creado,
+     * asegurando que cumplen con la estructura requerida. Al aprobarlo actualizará el estatus
+     * de la tabla SolicitudCurso a "Aprobado" y se creará el curso.
+     *
+     * @param obj Objeto que contiene el ID de la solicitud de curso (idSolicitudCurso)
+     * @return ResponseEntity con el mensaje de éxito o error en formato JSON.
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Aprobación completada correctamente.
+     *         - `404 Not Found`: Si no se encuentra la solicitud de curso.
+     *         - `400 Bad Request`: Si la solicitud no está en estado de revisión.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la aprobación.
+     */
+    @PostMapping("/aprobarCurso")
+    public ResponseEntity<Map<String, Object>> aprobarCurso(@RequestBody Map<String, Object> obj) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Extraer los valores del objeto recibido
+            Integer idSolicitudCurso = Integer.parseInt(obj.get("idSolicitudCurso").toString());
+            
+            // Validar que los datos necesarios estén presentes
+            if (idSolicitudCurso == null) {
+                response.put("mensaje", "El ID de la solicitud de curso es obligatorio");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Llamar al servicio para aprobar el curso
+            String resultado = administradorService.aprobarCurso(idSolicitudCurso);
+            
+            // Verificar el resultado
+            if (resultado.contains("no existe")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            } else if (resultado.contains("no está en estado de revisión")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            } else if (resultado.contains("aprobado exitosamente")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar aprobar el curso");
+            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (NumberFormatException e) {
+            response.put("mensaje", "El ID de la solicitud de curso debe ser un número entero válido");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Error al procesar la solicitud");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+     /**
      * Endpoint para bloquear a un usuario en el sistema.
      * 
      * Este método cambia el rol de un usuario a 'bloqueado', lo que impide que pueda
@@ -264,11 +456,9 @@ public class AdministradorController {
             response.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-       
     }
 
-
-      /**
+    /**
      * Endpoint para obtener los datos completos de un usuario.
      * 
      * Este método consulta toda la información relacionada con un usuario, incluyendo
@@ -310,8 +500,7 @@ public class AdministradorController {
                 .body(response);
         }
     }
-
-     /**
+ /**
      * Endpoint para buscar usuarios por coincidencia en nombre o apellidos.
      * 
      * Este método busca usuarios cuyo nombre, apellido paterno o apellido materno
@@ -359,6 +548,5 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
 
 }

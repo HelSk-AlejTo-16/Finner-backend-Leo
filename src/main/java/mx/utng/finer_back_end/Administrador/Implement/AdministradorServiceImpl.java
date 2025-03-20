@@ -2,7 +2,7 @@ package mx.utng.finer_back_end.Administrador.Implement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -13,11 +13,14 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpHeaders;
-import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 import java.util.Map;
+import java.util.List;
+import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
+import org.springframework.http.HttpHeaders;
+
 @Service
 public class AdministradorServiceImpl implements AdministradorService {
+
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -27,7 +30,6 @@ public class AdministradorServiceImpl implements AdministradorService {
 
     private final String API_KEY = "fb9a6eb9-05c4-4c7f-8b5b-9900053358cb";
     private final String API_URL = "https://api.apis.net.mx/v1/cedulaprofesional/";
-
     /**
      * {@inheritDoc}
      */
@@ -164,8 +166,145 @@ public class AdministradorServiceImpl implements AdministradorService {
             return "Error al crear la solicitud de categoría: " + e.getMessage();
         }
     }
-
-    //bloquearUsuario
+    
+ 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public String modificarCategoriaDescripcion(Integer idCategoria, String nuevaDescripcion) {
+        try {
+            // Llamar a la función de PostgreSQL para modificar la descripción de la categoría
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT modificar_desc_categoria(?, ?)", 
+                String.class, 
+                idCategoria, 
+                nuevaDescripcion
+            );
+            
+            return resultado;
+        } catch (Exception e) {
+            // Manejar cualquier excepción que pueda ocurrir
+            e.printStackTrace(); // Para ver el error completo en los logs
+            return "Error al modificar la descripción de la categoría: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Boolean eliminarCategoria(Integer idCategoria) {
+        try {
+            // First check if the category exists
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?", 
+                Integer.class, 
+                idCategoria
+            );
+            
+            if (count == null || count == 0) {
+                System.err.println("La categoría con ID " + idCategoria + " no existe.");
+                return false;
+            }
+            
+            // Check if it's the default category
+            if (idCategoria == 0) {
+                System.err.println("No se puede eliminar la categoría predeterminada (ID 0).");
+                return false;
+            }
+            
+            // Manually update references before deletion
+            int cursosActualizados = jdbcTemplate.update(
+                "UPDATE curso SET id_categoria = 0 WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            int solicitudesActualizadas = jdbcTemplate.update(
+                "UPDATE solicitudcurso SET id_categoria = 0 WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            System.out.println("Cursos reasignados: " + cursosActualizados);
+            System.out.println("Solicitudes reasignadas: " + solicitudesActualizadas);
+            
+            // Now try to delete the category
+            int rowsAffected = jdbcTemplate.update(
+                "DELETE FROM categoria WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            System.out.println("Filas afectadas al eliminar categoría: " + rowsAffected);
+            
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            // Log the full error for debugging
+            System.err.println("Error al eliminar categoría: " + idCategoria);
+            e.printStackTrace();
+            
+            return false;
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+  
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public String aprobarCurso(Integer idSolicitudCurso) {
+        try {
+            // First check if the course request exists
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM solicitudcurso WHERE id_solicitud_curso = ?", 
+                Integer.class, 
+                idSolicitudCurso
+            );
+            
+            if (count == null || count == 0) {
+                return "La solicitud de curso no existe.";
+            }
+            
+            // Check the current status
+            String estadoActual = jdbcTemplate.queryForObject(
+                "SELECT estatus FROM solicitudcurso WHERE id_solicitud_curso = ?",
+                String.class,
+                idSolicitudCurso
+            );
+            
+            // Log for debugging
+            System.out.println("Estado actual de la solicitud: " + estadoActual);
+            
+            if ("aprobado".equals(estadoActual)) {
+                return "La solicitud ya ha sido aprobada anteriormente";
+            }
+            
+            if ("rechazado".equals(estadoActual)) {
+                return "No se puede aprobar una solicitud que ya ha sido rechazada";
+            }
+            
+            // Update the status to 'aprobado'
+            int filasAfectadas = jdbcTemplate.update(
+                "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?", 
+                idSolicitudCurso
+            );
+            
+            if (filasAfectadas > 0) {
+                return "El curso ha sido aprobado exitosamente.";
+            } else {
+                return "Error al actualizar el registro";
+            }
+        } catch (Exception e) {
+            // Manejar cualquier excepción que pueda ocurrir
+            e.printStackTrace(); // Para ver el error completo en los logs
+            return "Error al aprobar el curso: " + e.getMessage();
+        }
+    }
 
      /**
      * {@inheritDoc}
@@ -186,12 +325,9 @@ public class AdministradorServiceImpl implements AdministradorService {
             // Manejar cualquier excepción que pueda ocurrir
             e.printStackTrace(); // Para ver el error completo en los logs
             return "Error al bloquear al usuario: " + e.getMessage();
-        } 
+        }
     }
-
-    //getUsuario
-
-    /**
+     /**
      * {@inheritDoc}
      */
     @Override
@@ -200,7 +336,7 @@ public class AdministradorServiceImpl implements AdministradorService {
         try {
             // Consultar los datos del usuario
             Map<String, Object> usuario = jdbcTemplate.queryForMap(
-                "SELECT u.*, r.rol " +
+                "SELECT u.*, r.nombre_rol " +
                 "FROM Usuario u " +
                 "JOIN Rol r ON u.id_rol = r.id_rol " +
                 "WHERE u.nombre_usuario = ?",
@@ -264,7 +400,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Realizar la búsqueda en la base de datos
             return jdbcTemplate.queryForList(
-                "SELECT u.*, r.rol " +
+                "SELECT u.*, r.nombre_rol " +
                 "FROM Usuario u " +
                 "JOIN Rol r ON u.id_rol = r.id_rol " +
                 "WHERE LOWER(u.nombre) LIKE ? " +
@@ -279,7 +415,4 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
-
-
-
-}  
+}  // Closing brace for the class

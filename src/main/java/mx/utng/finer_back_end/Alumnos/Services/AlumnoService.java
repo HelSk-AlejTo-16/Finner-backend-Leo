@@ -25,7 +25,7 @@ public class AlumnoService {
     public ResponseEntity<String> registrarAlumno(String nombre, String apellidoPaterno, String apellidoMaterno,
                                   String correo, String contrasenia, String nombreUsuario) {
         try {
-            String sql = "SELECT  registrar_alumno(?, ?, ?, ?, ?, ?)";
+            String sql = "SELECT registrar_alumno(?, ?, ?, ?, ?, ?)";
             String result = jdbcTemplate.queryForObject(sql, String.class, nombre, apellidoPaterno,
                     apellidoMaterno, correo, contrasenia, nombreUsuario);
             return ResponseEntity.ok(result); // Mensaje de respuesta de la función
@@ -55,7 +55,4 @@ public class AlumnoService {
             return "Error al actualizar la contraseña: " + e.getMessage();
         }
     }
-
-
-
 }
