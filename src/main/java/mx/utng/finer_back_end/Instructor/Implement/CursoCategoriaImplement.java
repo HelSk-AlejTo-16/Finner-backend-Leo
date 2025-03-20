@@ -40,7 +40,7 @@ public class CursoCategoriaImplement implements CursoCategoriaService{
     }
 
      
-    //VerCategoriaSolicitada
+   /*  //VerCategoriaSolicitada
     @Override
     public Map<String, Object> verCategoriaSolicitada(Integer idInstructor, Integer idEstatus) {
         try {
@@ -68,5 +68,5 @@ public class CursoCategoriaImplement implements CursoCategoriaService{
         } catch (Exception e) {
             return null;
         }
-    }
+    } */
 }
