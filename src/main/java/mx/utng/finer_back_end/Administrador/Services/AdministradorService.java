@@ -1,6 +1,8 @@
 package mx.utng.finer_back_end.Administrador.Services;
+
 import java.util.Map;
 import java.util.List;
+
 public interface AdministradorService {
     
     /**
@@ -22,11 +24,27 @@ public interface AdministradorService {
      * @return Mensaje indicando el resultado de la operación
      */
     String rechazarCurso(Long idSolicitudCurso, String correoInstructor, String motivoRechazo, String tituloCurso);
+
+    /**
+     * Aprueba una solicitud de curso.
+     * 
+     * @param idSolicitudCurso ID de la solicitud de curso a aprobar
+     * @return Mensaje con el resultado de la operación
+     */
+    String aprobarCurso(Integer idSolicitudCurso);    
     
-    // Add this method to your AdministradorService interface
+    /**
+     * Modifica la descripción de una categoría existente.
+     * 
+     * @param idCategoria ID de la categoría a modificar
+     * @param nuevaDescripcion Nueva descripción para la categoría
+     * @return Mensaje indicando el resultado de la operación
+     */
+    String modificarCategoriaDescripcion(Integer idCategoria, String nuevaDescripcion);
+    
     String crearCategoria(Integer idUsuarioInstructor, Integer idUsuarioAdmin, String nombreCategoria, String descripcion);
 
-     /**
+    /**
      * Bloquea a un usuario en el sistema cambiando su rol a 'bloqueado'.
      * 
      * @param nombreUsuario Nombre del usuario a bloquear
@@ -34,7 +52,7 @@ public interface AdministradorService {
      */
     String bloquearUsuario(String nombreUsuario);
 
-     /**
+    /**
      * Obtiene los datos completos de un usuario incluyendo la validación de su cédula profesional.
      * 
      * @param nombreUsuario Nombre de usuario a consultar
@@ -50,5 +68,11 @@ public interface AdministradorService {
      */
     List<Map<String, Object>> buscarUsuarioNombre(String busqueda);
 
-
+    /**
+     * Elimina una categoría existente.
+     * 
+     * @param idCategoria ID de la categoría a eliminar
+     * @return true si la eliminación fue exitosa, false en caso contrario
+     */
+    Boolean eliminarCategoria(Integer idCategoria);
 }

@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpHeaders;
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 import java.util.Map;
+
 @Service
 public class AdministradorServiceImpl implements AdministradorService {
 
@@ -28,55 +29,38 @@ public class AdministradorServiceImpl implements AdministradorService {
     private final String API_KEY = "fb9a6eb9-05c4-4c7f-8b5b-9900053358cb";
     private final String API_URL = "https://api.apis.net.mx/v1/cedulaprofesional/";
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public String eliminarAlumnoCurso(String matricula, Integer idCurso) {
         try {
-            // Llamar a la función de PostgreSQL para eliminar al alumno del curso
             String resultado = jdbcTemplate.queryForObject(
                 "SELECT eliminar_alumno_curso(?, ?)", 
                 String.class, 
                 matricula, 
                 idCurso
             );
-            
             return resultado;
         } catch (Exception e) {
-            // Manejar cualquier excepción que pueda ocurrir
             return "Error al eliminar al alumno del curso: " + e.getMessage();
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public String rechazarCurso(Long idSolicitudCurso, String correoInstructor, String motivoRechazo, String tituloCurso) {
         try {
-            // Primero verificamos si existe el registro
             Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM solicitudcurso WHERE id_solicitud_curso = ?", 
                 Integer.class, 
                 idSolicitudCurso
             );
             
-            // Log para depuración
-            System.out.println("Buscando solicitud con ID: " + idSolicitudCurso);
-            System.out.println("Registros encontrados: " + count);
-            
             if (count != null && count > 0) {
-                // Verificar el estado actual
                 String estadoActual = jdbcTemplate.queryForObject(
                     "SELECT estatus FROM solicitudcurso WHERE id_solicitud_curso = ?",
                     String.class,
                     idSolicitudCurso
                 );
-                
-                System.out.println("Estado actual de la solicitud: " + estadoActual);
                 
                 if ("rechazado".equals(estadoActual)) {
                     return "La solicitud ya ha sido rechazada anteriormente";
@@ -86,10 +70,8 @@ public class AdministradorServiceImpl implements AdministradorService {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
                 
-                // Enviar el correo antes de actualizar el estado, ya que el trigger eliminará la solicitud
                 enviarCorreoRechazo(correoInstructor, motivoRechazo, tituloCurso);
                 
-                // El registro existe y está en estado válido para rechazar, procedemos a actualizarlo
                 int filasAfectadas = jdbcTemplate.update(
                     "UPDATE solicitudcurso SET estatus = 'rechazado' WHERE id_solicitud_curso = ?", 
                     idSolicitudCurso
@@ -104,19 +86,11 @@ public class AdministradorServiceImpl implements AdministradorService {
                 return "No se encontró la solicitud de curso con el ID proporcionado";
             }
         } catch (Exception e) {
-            // Manejar cualquier excepción que pueda ocurrir
-            e.printStackTrace(); // Para ver el error completo en los logs
+            e.printStackTrace();
             return "Error al rechazar el curso: " + e.getMessage();
         }
     }
     
-    /**
-     * Envía un correo electrónico al instructor notificando el rechazo de su solicitud de curso.
-     * 
-     * @param correoInstructor Correo del instructor al que se enviará la notificación
-     * @param motivoRechazo Motivo por el cual se rechazó el curso
-     * @param tituloCurso Título del curso rechazado
-     */
     private void enviarCorreoRechazo(String correoInstructor, String motivoRechazo, String tituloCurso) {
         try {
             SimpleMailMessage mensaje = new SimpleMailMessage();
@@ -132,22 +106,16 @@ public class AdministradorServiceImpl implements AdministradorService {
                     "El equipo de Finner";
             
             mensaje.setText(cuerpoMensaje);
-            
             javaMailSender.send(mensaje);
         } catch (Exception e) {
-            // Solo registramos la excepción pero no interrumpimos el flujo
             System.err.println("Error al enviar correo de rechazo: " + e.getMessage());
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public String crearCategoria(Integer idUsuarioInstructor, Integer idUsuarioAdmin, String nombreCategoria, String descripcion) {
         try {
-            // Llamar a la función de PostgreSQL para crear la solicitud de categoría
             String resultado = jdbcTemplate.queryForObject(
                 "SELECT solicitar_creacion_categoria(?, ?, ?, ?)", 
                 String.class, 
@@ -156,49 +124,50 @@ public class AdministradorServiceImpl implements AdministradorService {
                 nombreCategoria, 
                 descripcion
             );
-            
             return resultado;
         } catch (Exception e) {
-            // Manejar cualquier excepción que pueda ocurrir
-            e.printStackTrace(); // Para ver el error completo en los logs
+            e.printStackTrace();
             return "Error al crear la solicitud de categoría: " + e.getMessage();
         }
     }
 
-    //bloquearUsuario
-
-     /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public String bloquearUsuario(String nombreUsuario) {
         try {
-            // Llamar a la función de PostgreSQL para bloquear al usuario
             String resultado = jdbcTemplate.queryForObject(
                 "SELECT bloquear_usuario(?)", 
                 String.class, 
                 nombreUsuario
             );
-            
             return resultado;
         } catch (Exception e) {
-            // Manejar cualquier excepción que pueda ocurrir
-            e.printStackTrace(); // Para ver el error completo en los logs
+            e.printStackTrace();
             return "Error al bloquear al usuario: " + e.getMessage();
         } 
     }
 
-    //getUsuario
-
-    /**
-     * {@inheritDoc}
-     */
+    @Override
+    @Transactional
+    public String modificarCategoriaDescripcion(Integer idCategoria, String nuevaDescripcion) {
+        try {
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT modificar_desc_categoria(?, ?)", 
+                String.class, 
+                idCategoria, 
+                nuevaDescripcion
+            );
+            return resultado;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error al modificar la descripción de la categoría: " + e.getMessage();
+        }
+    }
+    
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getUsuario(String nombreUsuario) {
         try {
-            // Consultar los datos del usuario
             Map<String, Object> usuario = jdbcTemplate.queryForMap(
                 "SELECT u.*, r.rol " +
                 "FROM Usuario u " +
@@ -207,7 +176,6 @@ public class AdministradorServiceImpl implements AdministradorService {
                 nombreUsuario
             );
 
-            // Si el usuario tiene número de cédula, validarla
             if (usuario.containsKey("numero_cedula") && usuario.get("numero_cedula") != null) {
                 String numeroCedula = usuario.get("numero_cedula").toString();
                 Map<String, Object> datosCedula = validarCedulaProfesional(numeroCedula);
@@ -223,12 +191,6 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
-    /**
-     * Valida una cédula profesional utilizando la API externa.
-     * 
-     * @param numeroCedula Número de cédula a validar
-     * @return Map con la información de la cédula profesional
-     */
     private Map<String, Object> validarCedulaProfesional(String numeroCedula) {
         try {
             RestTemplate restTemplate = new RestTemplate();
@@ -252,17 +214,11 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
-     /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
         try {
-            // Preparar el término de búsqueda para SQL LIKE
             String termino = "%" + busqueda.toLowerCase() + "%";
-            
-            // Realizar la búsqueda en la base de datos
             return jdbcTemplate.queryForList(
                 "SELECT u.*, r.rol " +
                 "FROM Usuario u " +
@@ -274,12 +230,99 @@ public class AdministradorServiceImpl implements AdministradorService {
             );
         } catch (Exception e) {
             e.printStackTrace();
-            // Retornar lista vacía en caso de error
             return new ArrayList<>();
         }
     }
 
+    @Override
+    @Transactional
+    public Boolean eliminarCategoria(Integer idCategoria) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?", 
+                Integer.class, 
+                idCategoria
+            );
+            
+            if (count == null || count == 0) {
+                System.err.println("La categoría con ID " + idCategoria + " no existe.");
+                return false;
+            }
+            
+            if (idCategoria == 0) {
+                System.err.println("No se puede eliminar la categoría predeterminada (ID 0).");
+                return false;
+            }
+            
+            int cursosActualizados = jdbcTemplate.update(
+                "UPDATE curso SET id_categoria = 0 WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            int solicitudesActualizadas = jdbcTemplate.update(
+                "UPDATE solicitudcurso SET id_categoria = 0 WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            System.out.println("Cursos reasignados: " + cursosActualizados);
+            System.out.println("Solicitudes reasignadas: " + solicitudesActualizadas);
+            
+            int rowsAffected = jdbcTemplate.update(
+                "DELETE FROM categoria WHERE id_categoria = ?", 
+                idCategoria
+            );
+            
+            System.out.println("Filas afectadas al eliminar categoría: " + rowsAffected);
+            
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            System.err.println("Error al eliminar categoría: " + idCategoria);
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-
-
-}  
+    @Override
+    @Transactional
+    public String aprobarCurso(Integer idSolicitudCurso) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM solicitudcurso WHERE id_solicitud_curso = ?", 
+                Integer.class, 
+                idSolicitudCurso
+            );
+            
+            if (count == null || count == 0) {
+                return "La solicitud de curso no existe.";
+            }
+            
+            String estadoActual = jdbcTemplate.queryForObject(
+                "SELECT estatus FROM solicitudcurso WHERE id_solicitud_curso = ?",
+                String.class,
+                idSolicitudCurso
+            );
+            
+            if ("aprobado".equals(estadoActual)) {
+                return "La solicitud ya ha sido aprobada anteriormente";
+            }
+            
+            if ("rechazado".equals(estadoActual)) {
+                return "No se puede aprobar una solicitud que ya ha sido rechazada";
+            }
+            
+            int filasAfectadas = jdbcTemplate.update(
+                "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?", 
+                idSolicitudCurso
+            );
+            
+            if (filasAfectadas > 0) {
+                return "El curso ha sido aprobado exitosamente.";
+            } else {
+                return "Error al actualizar el registro";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error al aprobar el curso: " + e.getMessage();
+        }
+    }
+}
