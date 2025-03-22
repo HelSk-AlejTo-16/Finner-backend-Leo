@@ -422,7 +422,6 @@ public class AdministradorServiceImpl implements AdministradorService {
     
         // Iterar sobre los resultados y mapearlos a UsuarioDocumento
         for (Object[] row : resultados) {
-            // Crear un nuevo UsuarioDocumento con todos los campos, incluyendo idUsuario
             UsuarioDocumento usuario = new UsuarioDocumento(
                     (String) row[1],  // nombre (String)
                     null, // idRol (Integer)
@@ -438,7 +437,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             );
             usuario.setId((Integer) row[0]);
     
-            // Agregar el usuario a la lista
             usuarios.add(usuario);
         }
     
@@ -454,7 +452,6 @@ public class AdministradorServiceImpl implements AdministradorService {
     
         // Iterar sobre los resultados y mapearlos a UsuarioDocumento
         for (Object[] row : resultados) {
-            // Crear un nuevo UsuarioDocumento con todos los campos, incluyendo idUsuario
             UsuarioDocumento usuario = new UsuarioDocumento(
                     (String) row[1],  // nombre (String)
                     null, // idRol (Integer)
@@ -469,10 +466,8 @@ public class AdministradorServiceImpl implements AdministradorService {
                     (byte[])  row[8] // cedulaPdf
             );
             
-            // Asignar el idUsuario desde el primer valor de la fila (row[0])
             usuario.setId((Integer) row[0]);
     
-            // Agregar el usuario a la lista
             usuarios.add(usuario);
         }
     
