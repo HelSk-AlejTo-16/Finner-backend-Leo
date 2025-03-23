@@ -1,14 +1,11 @@
 package mx.utng.finer_back_end.Instructor.Dao;
 
+import mx.utng.finer_back_end.Instructor.Documentos.Evaluacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
-import mx.utng.finer_back_end.Instructor.Documentos.EvaluacionDTO;
-
-@Repository
-public interface EvaluacionDao extends JpaRepository<EvaluacionDTO, Integer> {
+public interface EvaluacionDao extends JpaRepository<Evaluacion, Integer> {
 
     /**
      * Consulta nativa para insertar una evaluación y retornar el ID generado.
@@ -23,8 +20,4 @@ public interface EvaluacionDao extends JpaRepository<EvaluacionDTO, Integer> {
            nativeQuery = true)
     Integer generarEvaluacion(@Param("idCurso") Integer idCurso, 
                               @Param("tituloEvaluacion") String tituloEvaluacion);
-
-                            
-    @Query(value = "SELECT modificar_evaluacion(:id, :nuevoTexto)", nativeQuery = true)
-    boolean modificarEvaluacion(Integer id, String nuevoTexto);
 }

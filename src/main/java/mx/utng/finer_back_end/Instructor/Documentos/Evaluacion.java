@@ -1,30 +1,27 @@
 package mx.utng.finer_back_end.Instructor.Documentos;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.util.Date;
 
 @Entity
-public class EvaluacionDTO {
+@Table(name = "evaluacion")
+public class Evaluacion {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_evaluacion")
     private Integer idEvaluacion;
 
+    @Column(name = "id_curso")
     private Integer idCurso;
+
+    @Column(name = "titulo_evaluacion")
     private String tituloEvaluacion;
-    private String fechaCreacion;
 
-    // Constructor sin parámetros
-    public EvaluacionDTO() {}
+    @Column(name = "fecha_creacion")
+    private Date fechaCreacion;
 
-    // Constructor con parámetros
-    public EvaluacionDTO(Integer idEvaluacion, Integer idCurso, String tituloEvaluacion, String fechaCreacion) {
-        this.idEvaluacion = idEvaluacion;
-        this.idCurso = idCurso;
-        this.tituloEvaluacion = tituloEvaluacion;
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    // Getters and Setters
+    // Getters y Setters
     public Integer getIdEvaluacion() {
         return idEvaluacion;
     }
@@ -49,11 +46,11 @@ public class EvaluacionDTO {
         this.tituloEvaluacion = tituloEvaluacion;
     }
 
-    public String getFechaCreacion() {
+    public Date getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(String fechaCreacion) {
+    public void setFechaCreacion(Date fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 }
