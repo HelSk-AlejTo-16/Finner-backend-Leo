@@ -41,8 +41,8 @@ public class SolicitudCursoDocumento {
     @Column(name = "id_categoria")
     private Integer idCategoria;
 
-    @Column(name = "id_curso")
-    private Integer idCurso;
+    // @Column(name = "id_curso")
+    // private Integer idCurso;
 
     // Getters y Setters
 
@@ -110,11 +110,11 @@ public class SolicitudCursoDocumento {
         this.idCategoria = idCategoria;
     }
 
-    public Integer getIdCurso() {
-        return idCurso;
-    }
+    // public Integer getIdCurso() {
+    //     return idCurso;
+    // }
 
-    public void setIdCurso(Integer idCurso) {
-        this.idCurso = idCurso;
-    }
+    // public void setIdCurso(Integer idCurso) {
+    //     this.idCurso = idCurso;
+    // }
 }
