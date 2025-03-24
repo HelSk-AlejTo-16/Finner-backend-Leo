@@ -86,11 +86,11 @@ public class AdministradorServiceImpl implements AdministradorService {
 
                 System.out.println("Estado actual de la solicitud: " + estadoActual);
 
-                if ("rechazado".equals(estadoActual)) {
+                if ("rechazada".equals(estadoActual)) {
                     return "La solicitud ya ha sido rechazada anteriormente";
                 }
 
-                if ("aprobado".equals(estadoActual)) {
+                if ("aprobada".equals(estadoActual)) {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
 
