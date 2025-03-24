@@ -20,11 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import mx.utng.finer_back_end.Administrador.DTO.CategoriaDTO;
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
-
-import mx.utng.finer_back_end.Administrador.Services.EmailService;
-
 import mx.utng.finer_back_end.Documentos.UsuarioDocumento;
-
 
 @RestController
 @RequestMapping("/api/administrador")
@@ -33,13 +29,8 @@ public class AdministradorController {
     @Autowired
     private AdministradorService administradorService;
 
-
-     @Autowired
-    private EmailService emailService;  // Inyectamos el servicio de correo electrónico
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
 
     /**
      * Endpoint para eliminar un alumno de un curso específico.
@@ -156,13 +147,6 @@ public class AdministradorController {
                 response.put("mensaje", "No se encontró la solicitud de curso con el ID proporcionado");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             } else if (resultado.equals("Rechazado")) {
-                String asunto = "Notificación de Rechazo del Curso: " + tituloCurso;
-                String mensaje = "Estimado instructor,\n\nEl curso '" + tituloCurso +
-                                 "' ha sido rechazado. Motivo del rechazo:\n" + motivoRechazo +
-                                 "\n\nAtentamente,\nEl equipo de Finner";
-
-                emailService.enviarCorreoRechazo(correoInstructor, asunto, mensaje);
-
                 response.put("mensaje", "Solicitud de curso rechazada exitosamente");
                 return ResponseEntity.ok(response);
             } else {
