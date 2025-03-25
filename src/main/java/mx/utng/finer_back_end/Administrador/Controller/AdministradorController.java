@@ -126,44 +126,35 @@ public class AdministradorController {
         try {
             // Extraer los valores del objeto recibido
             Long idSolicitudCurso = Long.parseLong(obj.get("idSolicitudCurso").toString());
-            String correoInstructor = (String) obj.get("correoInstructor");
             String motivoRechazo = (String) obj.get("motivoRechazo");
-            String tituloCurso = (String) obj.get("tituloCurso");
+            // El título del curso es opcional, se obtendrá de la base de datos si no se proporciona
+            String tituloCurso = obj.containsKey("tituloCurso") ? (String) obj.get("tituloCurso") : "";
 
             // Validar que los datos necesarios estén presentes
-            if (idSolicitudCurso == null || correoInstructor == null || correoInstructor.isEmpty() ||
-                    motivoRechazo == null || motivoRechazo.isEmpty() || tituloCurso == null || tituloCurso.isEmpty()) {
-                response.put("mensaje",
-                        "El ID de la solicitud, el correo del instructor, el título del curso y el motivo del rechazo son obligatorios");
+            if (idSolicitudCurso == null || motivoRechazo == null || motivoRechazo.isEmpty()) {
+                response.put("mensaje", "El ID de la solicitud y el motivo del rechazo son obligatorios");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             // Llamar al servicio para rechazar el curso
-            String resultado = administradorService.rechazarCurso(idSolicitudCurso, correoInstructor, motivoRechazo,
-                    tituloCurso);
+            String resultado = administradorService.rechazarCurso(idSolicitudCurso, motivoRechazo, tituloCurso);
 
             // Verificar el resultado
-            if (resultado.equals("No se encontraron datos")) {
-                response.put("mensaje", "No se encontró la solicitud de curso con el ID proporcionado");
+            if (resultado.equals("No se encontró la solicitud de curso con el ID proporcionado")) {
+                response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             } else if (resultado.equals("Rechazado")) {
                 response.put("mensaje", "Solicitud de curso rechazada exitosamente");
-                return ResponseEntity.ok(response);
+                return ResponseEntity.status(HttpStatus.OK).body(response);
             } else {
-                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
+                response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
-        } catch (DataAccessException e) {
-            response.put("mensaje", "Error en la base de datos al intentar rechazar el curso");
-            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (NumberFormatException e) {
             response.put("mensaje", "El ID de la solicitud de curso debe ser un número válido");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            response.put("mensaje", "Error al procesar la solicitud");
-            response.put("error", e.getMessage());
+            response.put("mensaje", "Error al procesar la solicitud: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
