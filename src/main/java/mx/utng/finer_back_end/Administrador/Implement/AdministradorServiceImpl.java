@@ -6,9 +6,11 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 import java.util.Map;
 
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
+import mx.utng.finer_back_end.Documentos.UsuarioDocumento;
 
 @Service
 public class AdministradorServiceImpl implements AdministradorService {
@@ -342,7 +344,7 @@ public class AdministradorServiceImpl implements AdministradorService {
                 idSolicitudCurso
             );
             
-            // Update the status to 'aprobado' instead of 'aprobada' to match the constraint
+            // Update the status to 'aprobado' instead of 'aprobada'
             int filasAfectadas = jdbcTemplate.update(
                 "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?", 
                 idSolicitudCurso
@@ -387,6 +389,181 @@ public class AdministradorServiceImpl implements AdministradorService {
             // Manejar cualquier excepción que pueda ocurrir
             e.printStackTrace(); // Para ver el error completo en los logs
             return "Error al aprobar el curso: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public String bloquearUsuario(String nombreUsuario) {
+        try {
+            // Verificar si el usuario existe
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM usuario WHERE nombre_usuario = ?", 
+                Integer.class, 
+                nombreUsuario
+            );
+            
+            if (count == null || count == 0) {
+                return "No se encontró el usuario con el nombre de usuario proporcionado";
+            }
+            
+            // Verificar el rol actual del usuario
+            Integer idRolActual = jdbcTemplate.queryForObject(
+                "SELECT id_rol FROM usuario WHERE nombre_usuario = ?",
+                Integer.class,
+                nombreUsuario
+            );
+            
+            // Verificar si ya está bloqueado (asumiendo que el id_rol para 'bloqueado' es 4)
+            if (idRolActual != null && idRolActual == 4) {
+                return "El usuario ya se encuentra bloqueado";
+            }
+            
+            // Actualizar el rol del usuario a 'bloqueado'
+            int filasAfectadas = jdbcTemplate.update(
+                "UPDATE usuario SET id_rol = 4 WHERE nombre_usuario = ?", 
+                nombreUsuario
+            );
+            
+            if (filasAfectadas > 0) {
+                return "Usuario bloqueado exitosamente";
+            } else {
+                return "Error al bloquear el usuario";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error al bloquear el usuario: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Object> getUsuario(String nombreUsuario) {
+        try {
+            // Verificar si el usuario existe
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM usuario WHERE nombre_usuario = ?", 
+                Integer.class, 
+                nombreUsuario
+            );
+            
+            if (count == null || count == 0) {
+                return Map.of("error", "No se encontró el usuario con el nombre de usuario proporcionado");
+            }
+            
+            // Obtener los datos del usuario
+            Map<String, Object> usuario = jdbcTemplate.queryForMap(
+                "SELECT u.*, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
+                nombreUsuario
+            );
+            
+            // Verificar si el usuario es instructor y tiene cédula profesional
+            if (usuario.get("id_rol") != null && Integer.parseInt(usuario.get("id_rol").toString()) == 2) {
+                // Verificar el estado de validación de la cédula
+                String estadoValidacion = jdbcTemplate.queryForObject(
+                    "SELECT estatus FROM validacioncedula WHERE id_usuario = ?",
+                    String.class,
+                    usuario.get("id_usuario")
+                );
+                
+                usuario.put("estado_cedula", estadoValidacion != null ? estadoValidacion : "pendiente");
+            }
+            
+            return usuario;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Error al obtener los datos del usuario: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
+        try {
+            // Buscar usuarios por coincidencia en nombre, apellido paterno o apellido materno
+            String sql = "SELECT u.*, r.nombre_rol FROM usuario u " +
+                         "JOIN rol r ON u.id_rol = r.id_rol " +
+                         "WHERE LOWER(u.nombre) LIKE LOWER(?) OR " +
+                         "LOWER(u.apellido_paterno) LIKE LOWER(?) OR " +
+                         "LOWER(u.apellido_materno) LIKE LOWER(?)";
+            
+            String termino = "%" + busqueda + "%";
+            
+            return jdbcTemplate.queryForList(sql, termino, termino, termino);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of(Map.of("error", "Error al buscar usuarios: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<UsuarioDocumento> getAlumnos() {
+        try {
+            // Obtener todos los usuarios con rol de alumno (id_rol = 3)
+            String sql = "SELECT * FROM usuario WHERE id_rol = 3";
+            
+            return jdbcTemplate.query(sql, (rs, rowNum) -> {
+                UsuarioDocumento alumno = new UsuarioDocumento(
+                    rs.getString("nombre"),
+                    rs.getInt("id_rol"),
+                    rs.getString("apellido_paterno"),
+                    rs.getString("apellido_materno"),
+                    rs.getString("correo"),
+                    rs.getString("contrasenia"),
+                    rs.getString("nombre_usuario"),
+                    rs.getString("telefono"),
+                    rs.getString("direccion"),
+                    rs.getString("estatus"),
+                    null // No necesitamos la cédula para alumnos
+                );
+                alumno.setId(rs.getInt("id_usuario"));
+                return alumno;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<UsuarioDocumento> getInstructores() {
+        try {
+            // Obtener todos los usuarios con rol de instructor (id_rol = 2)
+            String sql = "SELECT * FROM usuario WHERE id_rol = 2";
+            
+            return jdbcTemplate.query(sql, (rs, rowNum) -> {
+                UsuarioDocumento instructor = new UsuarioDocumento(
+                    rs.getString("nombre"),
+                    rs.getInt("id_rol"),
+                    rs.getString("apellido_paterno"),
+                    rs.getString("apellido_materno"),
+                    rs.getString("correo"),
+                    rs.getString("contrasenia"),
+                    rs.getString("nombre_usuario"),
+                    rs.getString("telefono"),
+                    rs.getString("direccion"),
+                    rs.getString("estatus"),
+                    rs.getBytes("cedula_pdf")
+                );
+                instructor.setId(rs.getInt("id_usuario"));
+                return instructor;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 }  // Closing brace for the class
