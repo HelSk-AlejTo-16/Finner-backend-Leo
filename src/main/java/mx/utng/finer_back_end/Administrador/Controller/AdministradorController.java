@@ -191,7 +191,7 @@ public class AdministradorController {
             String resultado = administradorService.crearCategoria(idUsuarioInstructor, idUsuarioAdmin, nombreCategoria, descripcion);
             
             // Verificar el resultado - MODIFICADO PARA RECONOCER EL MENSAJE DE ÉXITO CORRECTO
-            if (resultado.contains("enviada correctamente")) {
+            if (resultado.contains("creada exitosamente")) {
                 response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
             } else {

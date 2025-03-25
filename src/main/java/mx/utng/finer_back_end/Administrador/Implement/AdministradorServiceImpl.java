@@ -6,6 +6,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 
@@ -138,21 +139,79 @@ public class AdministradorServiceImpl implements AdministradorService {
     @Transactional
     public String crearCategoria(Integer idUsuarioInstructor, Integer idUsuarioAdmin, String nombreCategoria, String descripcion) {
         try {
-            // Llamar a la función de PostgreSQL para crear la solicitud de categoría
-            String resultado = jdbcTemplate.queryForObject(
-                "SELECT solicitar_creacion_categoria(?, ?, ?, ?)", 
-                String.class, 
-                idUsuarioInstructor, 
-                idUsuarioAdmin, 
+            // Verificar si la categoría ya existe
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM categoria WHERE nombre_categoria = ?", 
+                Integer.class, 
+                nombreCategoria
+            );
+            
+            if (count != null && count > 0) {
+                return "Error: Ya existe una categoría con el nombre '" + nombreCategoria + "'";
+            }
+            
+            // Verificar si existe una solicitud de categoría y su estado
+            // Nota: Según la documentación, la solicitud debe estar en la tabla solicitudcategoria
+            // y debe tener un estado 'aprobado' para poder crear la categoría
+            try {
+                String estadoSolicitud = jdbcTemplate.queryForObject(
+                    "SELECT estatus FROM solicitudcategoria WHERE nombre_categoria = ?",
+                    String.class,
+                    nombreCategoria
+                );
+                
+                // Log para depuración
+                System.out.println("Estado de la solicitud para la categoría '" + nombreCategoria + "': " + estadoSolicitud);
+                
+                // Verificar si el estado es 'aprobado'
+                if (estadoSolicitud == null || !"aprobado".equals(estadoSolicitud)) {
+                    return "Error: La solicitud de categoría no está aprobada o no existe";
+                }
+            } catch (Exception e) {
+                // Si ocurre un error al buscar la solicitud, asumimos que no existe
+                System.err.println("Error al verificar el estado de la solicitud: " + e.getMessage());
+                return "Error: No se encontró una solicitud de categoría aprobada";
+            }
+            
+            // Si llegamos aquí, la solicitud existe y está aprobada, procedemos a crear la categoría
+            int filasAfectadas = jdbcTemplate.update(
+                "INSERT INTO categoria (nombre_categoria, descripcion) VALUES (?, ?)", 
                 nombreCategoria, 
                 descripcion
             );
             
-            return resultado;
+            if (filasAfectadas > 0) {
+                // Obtener el ID de la categoría recién creada
+                Integer idCategoria = jdbcTemplate.queryForObject(
+                    "SELECT id_categoria FROM categoria WHERE nombre_categoria = ?", 
+                    Integer.class, 
+                    nombreCategoria
+                );
+                
+                // Nota: La tabla log_categoria no existe en el esquema actual de la base de datos
+                // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo normal
+                // Si en el futuro se implementa esta tabla, se puede descomentar el código siguiente:
+                /*
+                try {
+                    jdbcTemplate.update(
+                        "INSERT INTO log_categoria (id_categoria, id_usuario_instructor, id_usuario_admin, fecha_creacion) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
+                        idCategoria, 
+                        idUsuarioInstructor, 
+                        idUsuarioAdmin
+                    );
+                } catch (Exception logError) {
+                    System.err.println("Error al registrar en log_categoria: " + logError.getMessage());
+                }
+                */
+                
+                return "Categoría '" + nombreCategoria + "' creada exitosamente con ID: " + idCategoria;
+            } else {
+                return "Error: No se pudo crear la categoría";
+            }
         } catch (Exception e) {
             // Manejar cualquier excepción que pueda ocurrir
             e.printStackTrace(); // Para ver el error completo en los logs
-            return "Error al crear la solicitud de categoría: " + e.getMessage();
+            return "Error al crear la categoría: " + e.getMessage();
         }
     }
     
@@ -277,14 +336,50 @@ public class AdministradorServiceImpl implements AdministradorService {
                 return "No se puede aprobar una solicitud que ya ha sido rechazada";
             }
             
-            // Update the status to 'aprobado'
+            // Get the course request details before updating status
+            Map<String, Object> solicitudCurso = jdbcTemplate.queryForMap(
+                "SELECT id_usuario_instructor, id_categoria, titulo_curso_solicitado, descripcion FROM solicitudcurso WHERE id_solicitud_curso = ?",
+                idSolicitudCurso
+            );
+            
+            // Update the status to 'aprobado' instead of 'aprobada' to match the constraint
             int filasAfectadas = jdbcTemplate.update(
                 "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?", 
                 idSolicitudCurso
             );
             
             if (filasAfectadas > 0) {
-                return "El curso ha sido aprobado exitosamente.";
+                // Create the course in the curso table
+                int cursoCreado = jdbcTemplate.update(
+                    "INSERT INTO curso (id_usuario_instructor, id_categoria, titulo_curso, descripcion) " +
+                    "VALUES (?, ?, ?, ?)",
+                    solicitudCurso.get("id_usuario_instructor"),
+                    solicitudCurso.get("id_categoria"),
+                    solicitudCurso.get("titulo_curso_solicitado"),
+                    solicitudCurso.get("descripcion")
+                );
+                
+                if (cursoCreado > 0) {
+                    // Get the ID of the newly created course
+                    Integer idCurso = jdbcTemplate.queryForObject(
+                        "SELECT id_curso FROM curso WHERE titulo_curso = ? AND id_usuario_instructor = ? ORDER BY id_curso DESC LIMIT 1",
+                        Integer.class,
+                        solicitudCurso.get("titulo_curso_solicitado"),
+                        solicitudCurso.get("id_usuario_instructor")
+                    );
+                    
+                    // Update the solicitudcurso with the course ID
+                    jdbcTemplate.update(
+                        "UPDATE solicitudcurso SET id_curso = ? WHERE id_solicitud_curso = ?",
+                        idCurso,
+                        idSolicitudCurso
+                    );
+                    
+                    return "El curso ha sido aprobado exitosamente y creado en el catálogo con ID: " + idCurso;
+                } else {
+                    // Rollback the transaction if the course creation fails
+                    throw new RuntimeException("Error al crear el curso en el catálogo");
+                }
             } else {
                 return "Error al actualizar el registro";
             }
