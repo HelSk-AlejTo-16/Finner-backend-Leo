@@ -49,7 +49,7 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public String rechazarCurso(Long idSolicitudCurso, String correoInstructor, String motivoRechazo, String tituloCurso) {
+    public String rechazarCurso(Long idSolicitudCurso, String motivoRechazo, String tituloCurso) {
         try {
             // Primero verificamos si existe el registro
             Integer count = jdbcTemplate.queryForObject(
@@ -80,7 +80,29 @@ public class AdministradorServiceImpl implements AdministradorService {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
                 
-                // Enviar el correo antes de actualizar el estado, ya que el trigger eliminará la solicitud
+                // Obtener el correo del instructor y el título del curso desde la base de datos
+                Map<String, Object> solicitudInfo = jdbcTemplate.queryForMap(
+                    "SELECT u.correo, sc.titulo_curso_solicitado " +
+                    "FROM solicitudcurso sc " +
+                    "JOIN usuario u ON sc.id_usuario_instructor = u.id_usuario " +
+                    "WHERE sc.id_solicitud_curso = ?",
+                    idSolicitudCurso
+                );
+                
+                String correoInstructor = (String) solicitudInfo.get("correo");
+                // Si el título no se proporciona, usamos el de la base de datos
+                if (tituloCurso == null || tituloCurso.isEmpty()) {
+                    tituloCurso = (String) solicitudInfo.get("titulo_curso_solicitado");
+                }
+                
+                System.out.println("Correo del instructor: " + correoInstructor);
+                System.out.println("Título del curso: " + tituloCurso);
+                
+                if (correoInstructor == null || correoInstructor.isEmpty()) {
+                    return "No se pudo obtener el correo del instructor";
+                }
+                
+                // Enviar el correo antes de actualizar el estado
                 enviarCorreoRechazo(correoInstructor, motivoRechazo, tituloCurso);
                 
                 // El registro existe y está en estado válido para rechazar, procedemos a actualizarlo
