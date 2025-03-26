@@ -14,71 +14,93 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "solicitudinstructor") // Nombre de la tabla
 public class SolicitudInstructorDocumento {
 
-    // Campo: id_solicitud_instructor 
+    // Campo: id_solicitud_instructor
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_solicitud_instructor")
-    private Long idSolicitudInstructor;
+    private Integer idSolicitudInstructor;
 
-    // Campo: id_rol 
-    @NotNull  
+    // Campo: id_rol
+    @NotNull
     @Column(name = "id_rol")
     private Integer idRol;
 
-    // Campo: nombre 
+    // Campo: nombre
     @NotBlank
     @Column(name = "nombre")
     private String nombre;
 
-    // Campo: apellido_paterno 
+    // Campo: apellido_paterno
     @NotBlank
     @Column(name = "apellido_paterno")
     private String apellidoPaterno;
 
-    // Campo: apellido_materno 
+    // Campo: apellido_materno
     @NotBlank
     @Column(name = "apellido_materno")
     private String apellidoMaterno;
 
-    // Campo: correo 
+    // Campo: correo
     @NotBlank
     @Email
     @Column(name = "correo")
     private String correo;
 
-    // Campo: contrasenia 
+    // Campo: contrasenia
     @NotBlank
     @Column(name = "contrasenia")
     private String contrasenia;
 
-    // Campo: nombre_usuario 
+    // Campo: nombre_usuario
     @NotBlank
     @Column(name = "nombre_usuario")
     private String nombreUsuario;
 
-    // Campo: telefono 
+    // Campo: telefono
     @Column(name = "telefono")
     private String telefono;
 
-    // Campo: direccion 
+    // Campo: direccion
     @Column(name = "direccion")
     private String direccion;
 
-    // Campo: cedula_pdf 
+    // Campo: cedula_pdf
     @Column(name = "cedula_pdf")
     private byte[] cedulaPdf;
 
-    // Campo: estatus_solicitud 
+    // Campo: estatus_solicitud
     @Column(name = "estatus_solicitud")
     private String estatusSolicitud;
 
+    // Constructor con todos los parámetros
+    public SolicitudInstructorDocumento(Integer idSolicitudInstructor, Integer idRol, String nombre,
+            String apellidoPaterno,
+            String apellidoMaterno, String correo, String contrasenia, String nombreUsuario,
+            String telefono, String direccion, byte[] cedulaPdf, String estatusSolicitud) {
+        this.idSolicitudInstructor = idSolicitudInstructor; // Mantener Integer
+        this.idRol = idRol;
+        this.nombre = nombre;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.correo = correo;
+        this.contrasenia = contrasenia;
+        this.nombreUsuario = nombreUsuario;
+        this.telefono = telefono;
+        this.direccion = direccion;
+        this.cedulaPdf = cedulaPdf;
+        this.estatusSolicitud = estatusSolicitud;
+    }
+
+    public SolicitudInstructorDocumento( String correo) {
+        this.correo = correo;
+    }
     // Getters y Setters
 
-    public Long getIdSolicitudInstructor() {
+    public Integer getIdSolicitudInstructor() {
         return idSolicitudInstructor;
     }
 
-    public void setIdSolicitudInstructor(Long idSolicitudInstructor) {
+    public void setIdSolicitudInstructor(Integer idSolicitudInstructor) {
         this.idSolicitudInstructor = idSolicitudInstructor;
     }
 
