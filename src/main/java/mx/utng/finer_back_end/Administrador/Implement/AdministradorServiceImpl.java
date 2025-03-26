@@ -7,6 +7,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -589,11 +591,15 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
+<<<<<<< HEAD
     
+=======
+>>>>>>> 5d571e4e2ad72074ae65d77dd190953c00c14a5f
     /**
      * {@inheritDoc}
      */
     @Override
+<<<<<<< HEAD
     @Transactional
     public String aceptarInstructor(Integer idSolicitudInstructor) {
         try {
@@ -702,3 +708,23 @@ public class AdministradorServiceImpl implements AdministradorService {
     }
     
 } // Add this closing brace for the class
+=======
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> verSolicitudInstructor() {
+        try {
+            return jdbcTemplate.queryForList(
+                "SELECT id_solicitud_instructor, id_rol, nombre, " +
+                "apellido_paterno, apellido_materno, correo, " +
+                "nombre_usuario, telefono, direccion, " +
+                "fecha_solicitud, estatus_solicitud " +
+                "FROM SolicitudInstructor " +
+                "ORDER BY fecha_solicitud ASC"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+}  // Closing brace for the class
+>>>>>>> 5d571e4e2ad72074ae65d77dd190953c00c14a5f

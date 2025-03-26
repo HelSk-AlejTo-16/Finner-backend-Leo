@@ -90,5 +90,12 @@ String aprobarCurso(Integer idSolicitudCurso);
     List<UsuarioDocumento> getAlumnos(); 
 
     List<UsuarioDocumento> getInstructores(); 
+
+     /**
+     * Obtiene todas las solicitudes de usuarios que quieren ser instructores.
+     * 
+     * @return Lista de solicitudes ordenadas de la más antigua a la más reciente
+     */
+    List<Map<String, Object>> verSolicitudInstructor();
  
 }
