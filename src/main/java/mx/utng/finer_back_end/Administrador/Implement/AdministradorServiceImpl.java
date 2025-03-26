@@ -6,6 +6,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -588,4 +590,25 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> verSolicitudInstructor() {
+        try {
+            return jdbcTemplate.queryForList(
+                "SELECT id_solicitud_instructor, id_rol, nombre, " +
+                "apellido_paterno, apellido_materno, correo, " +
+                "nombre_usuario, telefono, direccion, " +
+                "fecha_solicitud, estatus_solicitud " +
+                "FROM SolicitudInstructor " +
+                "ORDER BY fecha_solicitud ASC"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
 }  // Closing brace for the class
