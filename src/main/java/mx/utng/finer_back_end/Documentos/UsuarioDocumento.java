@@ -53,6 +53,9 @@ public class UsuarioDocumento {
 
     @Column(name = "estatus")
     private String estatus;
+     // Constructor sin parámetros (obligatorio para JPA)
+     public UsuarioDocumento() {
+    }
 
     public UsuarioDocumento(String nombre, Integer idRol, String apellidoPaterno,
             String apellidoMaterno, String correo, String contrasenia,
