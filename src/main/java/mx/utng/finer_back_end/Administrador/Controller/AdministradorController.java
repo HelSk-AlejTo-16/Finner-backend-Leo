@@ -636,5 +636,43 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    
+    /**
+     * Endpoint para obtener todas las solicitudes de usuarios que quieren ser instructores.
+     * 
+     * Este método retorna una lista de todas las solicitudes pendientes para ser instructor,
+     * ordenadas desde la más antigua hasta la más reciente. Incluye información detallada
+     * como nombre, correo, teléfono y estado de la solicitud.
+     *
+     * @return ResponseEntity con la lista de solicitudes o mensaje de error
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Lista de solicitudes recuperada correctamente (incluso si está vacía).
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la consulta.
+     */
+    @GetMapping("/solicitudes-instructor")
+    public ResponseEntity<?> verSolicitudInstructor() {
+        try {
+            List<Map<String, Object>> solicitudes = administradorService.verSolicitudInstructor();
+            Map<String, Object> response = new HashMap<>();
+            
+            if (solicitudes.isEmpty()) {
+                response.put("mensaje", "No hay solicitudes de instructor");
+                response.put("solicitudes", solicitudes); // Incluimos la lista vacía
+            } else {
+                response.put("mensaje", "Solicitudes recuperadas exitosamente");
+                response.put("solicitudes", solicitudes);
+            }
+            
+            return ResponseEntity.ok(response); // Siempre retornamos 200 OK
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al obtener las solicitudes de instructor");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
 }
