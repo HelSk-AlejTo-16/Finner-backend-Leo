@@ -649,12 +649,12 @@ public class AdministradorController {
     public ResponseEntity<?> verSolicitudInstructor() {
         try {
             List<Map<String, Object>> solicitudes = administradorService.verSolicitudInstructor();
-            Map<String, Object> response = new HashMap<>();
             
             if (solicitudes.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
                 response.put("mensaje", "No hay solicitudes de instructor");
                 return ResponseEntity.ok(response);
-            } else { // Correcto, agregamos la lista de solicitudes al mapa
+            } else {
                 return ResponseEntity.ok(solicitudes);
             }
             
