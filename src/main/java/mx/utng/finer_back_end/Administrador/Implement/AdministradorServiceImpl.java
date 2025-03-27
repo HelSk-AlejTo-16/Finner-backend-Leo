@@ -2,10 +2,7 @@ package mx.utng.finer_back_end.Administrador.Implement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-<<<<<<< HEAD
 import org.springframework.http.ResponseEntity;
-=======
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
