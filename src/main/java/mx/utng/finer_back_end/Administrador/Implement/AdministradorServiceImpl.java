@@ -481,7 +481,7 @@ public class AdministradorServiceImpl implements AdministradorService {
     @Override
 public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
     try {
-        // Modificar la consulta para buscar palabras completas
+   
         String sql = "SELECT u.*, r.rol FROM usuario u " +
                      "JOIN rol r ON u.id_rol = r.id_rol " +
                      "WHERE (LOWER(u.nombre) = LOWER(?) OR " +
@@ -494,10 +494,10 @@ public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
                      "       LOWER(CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) = LOWER(?) OR " +
                      "       LOWER(CONCAT(u.apellido_paterno, ' ', u.apellido_materno, ' ', u.nombre)) = LOWER(?))";
         
-        // Preparar el término de búsqueda
+      
         String termino = busqueda.trim();
         
-        // Ejecutar la consulta con múltiples parámetros
+   
         return jdbcTemplate.queryForList(sql, 
             termino, termino, termino, 
             termino, termino, termino, 
