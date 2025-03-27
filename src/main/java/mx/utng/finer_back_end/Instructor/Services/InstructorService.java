@@ -30,7 +30,7 @@ public class InstructorService {
      * @return Mensaje de éxito o error 
      */
     public ResponseEntity<String> registrarInstructor(String nombre, String apellidoPaterno, String apellidoMaterno,
-                                  String correo, String contrasenia, String nombreUsuario, String telefono, String direccion,  byte[] cedulaPdf) {
+                                  String correo, String contrasenia, String nombreUsuario, String telefono, String direccion,  String cedulaPdf) {
         try {
             String sql = "SELECT registrar_instructor(?, ?, ?, ?, ?, ?, ?, ?, ?)";
             String result = jdbcTemplate.queryForObject(sql, String.class, nombre, apellidoPaterno,
@@ -41,6 +41,23 @@ public class InstructorService {
         }
     }
 
-
+    public String obtenerNombreInstructor(int idInstructor) {
+        try {
+            // Modificamos la consulta para obtener el nombre completo solo si el usuario tiene rol = 2
+            String sql = "SELECT CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) " +
+                         "FROM usuario WHERE id_usuario = ? AND id_rol = 2";
+            String nombreInstructor = jdbcTemplate.queryForObject(sql, String.class, idInstructor);
+            
+            // Agregar un log para verificar el valor obtenido
+            System.out.println("Nombre del instructor: " + nombreInstructor);
+            
+            return nombreInstructor;
+        } catch (Exception e) {
+            System.err.println("Error al obtener el nombre del instructor: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    
  
 }
