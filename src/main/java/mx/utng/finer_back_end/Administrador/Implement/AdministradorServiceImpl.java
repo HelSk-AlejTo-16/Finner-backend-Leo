@@ -732,16 +732,6 @@ public class AdministradorServiceImpl implements AdministradorService {
     public List<Map<String, Object>> verSolicitudInstructor() {
         // Implement the method to get all instructor requests
         try {
-<<<<<<< HEAD
-            return jdbcTemplate.queryForList(
-                "SELECT id_solicitud_instructor, id_rol, nombre, " +
-                "apellido_paterno, apellido_materno, correo, " +
-                "nombre_usuario, telefono, direccion, " +
-                "fecha_solicitud, estatus_solicitud " +
-                "FROM solicitudinstructor " +
-                "ORDER BY fecha_solicitud ASC"
-            );
-=======
             String sql = "SELECT si.id_solicitud_instructor, si.nombre, si.apellido_paterno, " +
                     "si.apellido_materno, si.correo, si.telefono, si.nombre_usuario, " +
                     "si.estatus_solicitud, si.fecha_solicitud " +
@@ -749,7 +739,6 @@ public class AdministradorServiceImpl implements AdministradorService {
                     "ORDER BY si.fecha_solicitud DESC";
 
             return jdbcTemplate.queryForList(sql);
->>>>>>> ce03e9c4fcefe161c6b2b589b642f4b2601f64f7
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();

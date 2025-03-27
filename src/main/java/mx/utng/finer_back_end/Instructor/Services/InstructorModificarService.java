@@ -1,13 +1,9 @@
 package mx.utng.finer_back_end.Instructor.Services;
 
 import java.sql.Connection;
-<<<<<<< HEAD
- 
-=======
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
->>>>>>> ce03e9c4fcefe161c6b2b589b642f4b2601f64f7
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
