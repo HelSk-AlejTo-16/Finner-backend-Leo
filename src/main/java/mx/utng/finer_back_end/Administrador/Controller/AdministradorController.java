@@ -672,8 +672,9 @@ public class AdministradorController {
      * Endpoint para aceptar una solicitud de instructor.
      * 
      * Este método permite al administrador aprobar una solicitud de instructor.
-     * Al aprobarla, se cambia el estatus de la solicitud a "aprobada" y se crea
-     * un nuevo usuario con rol de instructor en el sistema.
+     * Al aprobarla, se cambia el estatus de la solicitud a "aprobada", se crea
+     * un nuevo usuario con rol de instructor en el sistema y se elimina la solicitud
+     * de la tabla solicitud_instructor.
      *
      * @param payload Objeto que contiene el ID de la solicitud de instructor
      * @return ResponseEntity con el mensaje de éxito o error
@@ -703,7 +704,15 @@ public class AdministradorController {
                 response.put("mensaje", resultado);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             } else if (resultado.contains("aceptado exitosamente") || resultado.contains("aprobado exitosamente")) {
-                response.put("mensaje", resultado);
+                // Si la solicitud fue aprobada exitosamente, eliminar la solicitud de la tabla
+                try {
+                    // Modificado para usar el nombre correcto de la tabla: solicitudinstructor
+                    jdbcTemplate.update("DELETE FROM solicitudinstructor WHERE id_solicitud_instructor = ?", idSolicitudInstructor);
+                    response.put("mensaje", resultado + " La solicitud ha sido eliminada de la tabla.");
+                } catch (Exception e) {
+                    response.put("mensaje", resultado + " Nota: No se pudo eliminar la solicitud de la tabla.");
+                    response.put("error_eliminacion", e.getMessage());
+                }
                 return ResponseEntity.ok(response);
             } else {
                 response.put("mensaje", "Error al procesar la solicitud: " + resultado);
