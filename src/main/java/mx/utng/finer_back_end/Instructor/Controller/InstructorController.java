@@ -48,6 +48,11 @@ public class InstructorController {
                                                     ) {
         try {
             byte[] cedulaBytes = cedula.getBytes();
+             // Verifica que el tamaño del archivo sea mayor a cero
+        if (cedulaBytes.length == 0) {
+            return ResponseEntity.status(400).body("El archivo de cédula está vacío");
+        }
+
             ResponseEntity<String> mensaje = instructorService.registrarInstructor(nombre, apellidoPaterno, apellidoMaterno, correo, contrasenia, nombreUsuario, telefono, direccion, cedulaBytes);
             return mensaje;
         } catch (Exception e) {
