@@ -1,6 +1,8 @@
 package mx.utng.finer_back_end.Administrador.Implement;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.ResponseEntity;  // Add this import
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,7 +15,7 @@ import java.util.Map;
 
 import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 import mx.utng.finer_back_end.Documentos.UsuarioDocumento;
-
+    
 @Service
 public class AdministradorServiceImpl implements AdministradorService {
 
@@ -73,12 +75,12 @@ public class AdministradorServiceImpl implements AdministradorService {
                 );
                 
                 System.out.println("Estado actual de la solicitud: " + estadoActual);
-                
-                if ("rechazado".equals(estadoActual)) {
+
+                if ("rechazada".equals(estadoActual)) {
                     return "La solicitud ya ha sido rechazada anteriormente";
                 }
-                
-                if ("aprobado".equals(estadoActual)) {
+
+                if ("aprobada".equals(estadoActual)) {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
                 
@@ -214,21 +216,7 @@ public class AdministradorServiceImpl implements AdministradorService {
                     nombreCategoria
                 );
                 
-                // Nota: La tabla log_categoria no existe en el esquema actual de la base de datos
-                // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo normal
-                // Si en el futuro se implementa esta tabla, se puede descomentar el código siguiente:
-                /*
-                try {
-                    jdbcTemplate.update(
-                        "INSERT INTO log_categoria (id_categoria, id_usuario_instructor, id_usuario_admin, fecha_creacion) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
-                        idCategoria, 
-                        idUsuarioInstructor, 
-                        idUsuarioAdmin
-                    );
-                } catch (Exception logError) {
-                    System.err.println("Error al registrar en log_categoria: " + logError.getMessage());
-                }
-                */
+                
                 
                 return "Categoría '" + nombreCategoria + "' creada exitosamente con ID: " + idCategoria;
             } else {
@@ -335,8 +323,8 @@ public class AdministradorServiceImpl implements AdministradorService {
         try {
             // First check if the course request exists
             Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM solicitudcurso WHERE id_solicitud_curso = ?", 
-                Integer.class, 
+                "SELECT COUNT(*) FROM solicitudcurso WHERE id_solicitud_curso = ?",
+                Integer.class,
                 idSolicitudCurso
             );
             
@@ -353,12 +341,12 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Log for debugging
             System.out.println("Estado actual de la solicitud: " + estadoActual);
-            
-            if ("aprobado".equals(estadoActual)) {
+
+            if ("aprobada".equals(estadoActual)) {
                 return "La solicitud ya ha sido aprobada anteriormente";
             }
-            
-            if ("rechazado".equals(estadoActual)) {
+
+            if ("rechazada".equals(estadoActual)) {
                 return "No se puede aprobar una solicitud que ya ha sido rechazada";
             }
             
@@ -370,10 +358,10 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Update the status to 'aprobado' instead of 'aprobada'
             int filasAfectadas = jdbcTemplate.update(
-                "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?", 
-                idSolicitudCurso
-            );
-            
+
+                    "UPDATE solicitudcurso SET estatus = 'aprobada' WHERE id_solicitud_curso = ?",
+                    idSolicitudCurso);
+
             if (filasAfectadas > 0) {
                 // Create the course in the curso table
                 int cursoCreado = jdbcTemplate.update(
@@ -423,42 +411,27 @@ public class AdministradorServiceImpl implements AdministradorService {
     @Transactional
     public String bloquearUsuario(String nombreUsuario) {
         try {
-            // Verificar si el usuario existe
-            Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM usuario WHERE nombre_usuario = ?", 
+            // Get user ID by username
+            Integer idUsuario = jdbcTemplate.queryForObject(
+                "SELECT id_usuario FROM usuario WHERE nombre_usuario = ?", 
                 Integer.class, 
                 nombreUsuario
             );
-            
-            if (count == null || count == 0) {
+    
+            if (idUsuario == null) {
                 return "No se encontró el usuario con el nombre de usuario proporcionado";
             }
-            
-            // Verificar el rol actual del usuario
-            Integer idRolActual = jdbcTemplate.queryForObject(
-                "SELECT id_rol FROM usuario WHERE nombre_usuario = ?",
-                Integer.class,
-                nombreUsuario
+    
+            // Call database function to block user
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT bloquear_usuario(?)", 
+                String.class, 
+                idUsuario
             );
-            
-            // Verificar si ya está bloqueado (asumiendo que el id_rol para 'bloqueado' es 4)
-            if (idRolActual != null && idRolActual == 4) {
-                return "El usuario ya se encuentra bloqueado";
-            }
-            
-            // Actualizar el rol del usuario a 'bloqueado'
-            int filasAfectadas = jdbcTemplate.update(
-                "UPDATE usuario SET id_rol = 4 WHERE nombre_usuario = ?", 
-                nombreUsuario
-            );
-            
-            if (filasAfectadas > 0) {
-                return "Usuario bloqueado exitosamente";
-            } else {
-                return "Error al bloquear el usuario";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    
+            return resultado;
+    
+        } catch (DataAccessException e) {
             return "Error al bloquear el usuario: " + e.getMessage();
         }
     }
@@ -482,7 +455,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Obtener los datos del usuario
             Map<String, Object> usuario = jdbcTemplate.queryForMap(
-                "SELECT u.*, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
+                "SELECT u.*, r.rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
                 nombreUsuario
             );
             
@@ -505,22 +478,23 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
+    public List<Map<String, Object>> buscarUsuarioNombre(String nombreUsuario) {
         try {
-            // Buscar usuarios por coincidencia en nombre, apellido paterno o apellido materno
-            String sql = "SELECT u.*, r.nombre_rol FROM usuario u " +
+            // Buscar usuarios por coincidencia en nombre
+            String sql = "SELECT u.*, r.rol FROM usuario u " +
                          "JOIN rol r ON u.id_rol = r.id_rol " +
                          "WHERE LOWER(u.nombre) LIKE LOWER(?) OR " +
                          "LOWER(u.apellido_paterno) LIKE LOWER(?) OR " +
-                         "LOWER(u.apellido_materno) LIKE LOWER(?)";
+                         "LOWER(u.apellido_materno) LIKE LOWER(?) OR " +
+                         "LOWER(u.nombre_usuario) LIKE LOWER(?) OR " +
+                         "LOWER(CONCAT(u.nombre, ' ', u.apellido_paterno)) LIKE LOWER(?) OR " +
+                         "LOWER(CONCAT(u.nombre, ' ', u.apellido_materno)) LIKE LOWER(?)";
             
-            String termino = "%" + busqueda + "%";
+            String termino = "%" + nombreUsuario + "%";
             
-            return jdbcTemplate.queryForList(sql, termino, termino, termino);
+            return jdbcTemplate.queryForList(sql, 
+                termino, termino, termino, termino, termino, termino);
         } catch (Exception e) {
             e.printStackTrace();
             return List.of(Map.of("error", "Error al buscar usuarios: " + e.getMessage()));
@@ -590,10 +564,104 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
-    /**
-     * {@inheritDoc}
-     */
     @Override
+    @Transactional
+    public String aceptarInstructor(Integer idSolicitudInstructor) {
+        try {
+            // Verificar si la solicitud existe
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM solicitudinstructor WHERE id_solicitud_instructor = ?",
+                Integer.class,
+                idSolicitudInstructor);
+                
+            if (count == null || count == 0) {
+                return "La solicitud de instructor no existe";
+            }
+            
+            // Verificar el estatus actual
+            String estatus = jdbcTemplate.queryForObject(
+                "SELECT estatus_solicitud FROM solicitudinstructor WHERE id_solicitud_instructor = ?",
+                String.class,
+                idSolicitudInstructor);
+                
+            if (!"pendiente".equals(estatus)) {
+                return "La solicitud ya ha sido procesada anteriormente";
+            }
+            
+            // Obtener datos del instructor antes de actualizar el estatus
+            Map<String, Object> instructor = jdbcTemplate.queryForMap(
+                "SELECT * FROM solicitudinstructor WHERE id_solicitud_instructor = ?",
+                idSolicitudInstructor);
+                
+            
+            
+            // Llamar a la función de PostgreSQL para actualizar el estado de la solicitud
+            try {
+                jdbcTemplate.update("SELECT aceptar_instructor(?)", idSolicitudInstructor);
+                System.out.println("Estado de solicitud actualizado a 'aprobada' mediante función de base de datos");
+            } catch (Exception e1) {
+                System.err.println("Error al llamar a la función aceptar_instructor: " + e1.getMessage());
+                
+                // Si falla la función, intentamos actualizar manualmente
+                try {
+                    jdbcTemplate.update(
+                        "UPDATE solicitudinstructor SET estatus_solicitud = 'aprobada' WHERE id_solicitud_instructor = ?",
+                        idSolicitudInstructor
+                    );
+                    System.out.println("Estado actualizado manualmente a 'aprobada'");
+                } catch (Exception e2) {
+                    System.err.println("Error al actualizar manualmente: " + e2.getMessage());
+                    // No interrumpimos el flujo ya que el usuario ha sido creado
+                }
+            }
+            
+            // Enviar correo de aceptación
+            enviarCorreoAceptacionInstructor(instructor);
+            
+            return "Instructor aceptado exitosamente";
+        } catch (Exception e) {
+            e.printStackTrace(); // Imprimir la excepción completa para depuración
+            return "Error al aceptar al instructor: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * Envía un correo electrónico al instructor notificando la aprobación de su solicitud.
+     * 
+     * @param solicitudInfo Información de la solicitud del instructor
+     */
+    private void enviarCorreoAceptacionInstructor(Map<String, Object> solicitudInfo) {
+        try {
+            String correoInstructor = (String) solicitudInfo.get("correo");
+            String nombreInstructor = (String) solicitudInfo.get("nombre") + " " + 
+                                     (String) solicitudInfo.get("apellido_paterno");
+            String nombreUsuario = (String) solicitudInfo.get("nombre_usuario");
+            
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom("finner.oficial.2025@gmail.com");
+            mensaje.setTo(correoInstructor);
+            mensaje.setSubject("¡Felicidades! Su solicitud como instructor ha sido aprobada - Finner");
+            
+            String cuerpoMensaje = "Estimado/a " + nombreInstructor + ",\n\n" +
+                    "Nos complace informarle que su solicitud para convertirse en instructor en la plataforma Finner ha sido aprobada.\n\n" +
+                    "Ahora puede acceder a la plataforma con su nombre de usuario: " + nombreUsuario + "\n\n" +
+                    "Como instructor, podrá crear y gestionar cursos, interactuar con los alumnos y contribuir al crecimiento de nuestra comunidad educativa.\n\n" +
+                    "Si tiene alguna pregunta o necesita asistencia, no dude en contactar a nuestro equipo de soporte.\n\n" +
+                    "¡Le damos la bienvenida al equipo de instructores de Finner!\n\n" +
+                    "Atentamente,\n" +
+                    "El equipo de Finner";
+            
+            mensaje.setText(cuerpoMensaje);
+            
+            javaMailSender.send(mensaje);
+        } catch (Exception e) {
+            // Solo registramos la excepción pero no interrumpimos el flujo
+            System.err.println("Error al enviar correo de aceptación de instructor: " + e.getMessage());
+        }
+    }
+
+
+    
     @Transactional(readOnly = true)
     public List<Map<String, Object>> verSolicitudInstructor() {
         try {
@@ -611,4 +679,4 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
-}  // Closing brace for the class
+}

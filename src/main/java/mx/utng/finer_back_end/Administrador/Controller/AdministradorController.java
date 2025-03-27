@@ -23,7 +23,7 @@ import mx.utng.finer_back_end.Administrador.Services.AdministradorService;
 import mx.utng.finer_back_end.Documentos.UsuarioDocumento;
 
 @RestController
-@RequestMapping("/api/administrador")
+@RequestMapping("/api/admin")  // Changed from "/api/administrador"
 public class AdministradorController {
 
     @Autowired
@@ -316,6 +316,17 @@ public class AdministradorController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
+            // Verificar si la categoría existe
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?",
+                    Integer.class,
+                    id);
+
+            if (count != null && count == 0) {
+                response.put("mensaje", "No se encontró la categoría con el ID proporcionado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
             // Llamar al servicio para eliminar la categoría
             Boolean resultado = administradorService.eliminarCategoria(id);
 
@@ -324,20 +335,9 @@ public class AdministradorController {
                 response.put("mensaje", "Categoría eliminada correctamente");
                 return ResponseEntity.ok(response);
             } else {
-                // Verificar si la categoría existe
-                Integer count = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM categoria WHERE id_categoria = ?",
-                        Integer.class,
-                        id);
-
-                if (count != null && count == 0) {
-                    response.put("mensaje", "No se encontró la categoría con el ID proporcionado");
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-                } else {
-                    response.put("mensaje",
-                            "No se pudo eliminar la categoría. Puede estar siendo utilizada por otros registros.");
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-                }
+                response.put("mensaje",
+                        "No se pudo eliminar la categoría. Puede estar siendo utilizada por otros registros.");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (DataAccessException e) {
@@ -439,48 +439,43 @@ public class AdministradorController {
      *         bloqueo.
      */
     @PostMapping("/bloquearUsuario")
-    public ResponseEntity<Map<String, Object>> bloquearUsuario(@RequestBody Map<String, Object> obj) {
-        Map<String, Object> response = new HashMap<>();
+public ResponseEntity<Map<String, String>> bloquearUsuario(@RequestBody Map obj) {
+    Map<String, String> response = new HashMap<>();
 
-        try {
-            // Extraer el nombre de usuario del objeto recibido
-            String nombreUsuario = (String) obj.get("nombreUsuario");
+    try {
+        String nombreUsuario = (String) obj.get("nombreUsuario");
 
-            // Validar que el nombre de usuario esté presente
-            if (nombreUsuario == null || nombreUsuario.isEmpty()) {
-                response.put("mensaje", "El nombre de usuario es obligatorio");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
+        if (nombreUsuario == null || nombreUsuario.isEmpty()) {
+            response.put("mensaje", "El nombre de usuario es obligatorio");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
 
-            // Llamar al servicio para bloquear al usuario
-            String resultado = administradorService.bloquearUsuario(nombreUsuario);
+        String resultado = administradorService.bloquearUsuario(nombreUsuario);
 
-            // Verificar el resultado
-            if (resultado.equals("Usuario no encontrado.")) {
-                response.put("mensaje", resultado);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            } else if (resultado.equals("Usuario bloqueado exitosamente.")) {
-                response.put("mensaje", resultado);
-                return ResponseEntity.ok(response);
-            } else if (resultado.equals("El usuario ya está bloqueado.")) {
-                response.put("mensaje", resultado);
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-
-        } catch (DataAccessException e) {
-            response.put("mensaje", "Error en la base de datos al intentar bloquear al usuario");
-            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } catch (Exception e) {
-            response.put("mensaje", "Error al procesar la solicitud");
-            response.put("error", e.getMessage());
+        if (resultado.contains("Usuario bloqueado correctamente")) {
+            response.put("mensaje", resultado);
+            return ResponseEntity.ok(response);
+        } else if (resultado.equals("Usuario no encontrado.")) {
+            response.put("mensaje", resultado);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } else if (resultado.equals("El usuario ya está bloqueado.")) {
+            response.put("mensaje", resultado);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("mensaje", "Error al procesar la solicitud: " + resultado);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-    }
 
+    } catch (DataAccessException e) {
+        response.put("mensaje", "Error en la base de datos al intentar bloquear al usuario");
+        response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    } catch (Exception e) {
+        response.put("mensaje", "Error al procesar la solicitud");
+        response.put("error", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+}
     /**
      * Endpoint para obtener los datos completos de un usuario.
      * 
@@ -603,22 +598,20 @@ public class AdministradorController {
      *         - `500 Internal Server Error`: Si ocurre un error al procesar la
      *         búsqueda.
      */
-    @PostMapping("/buscarUsuarioNombre")
-    public ResponseEntity<Map<String, Object>> buscarUsuarioNombre(@RequestBody Map<String, Object> obj) {
+    @GetMapping("/buscarUsuario/{nombreUsuario}")
+    public ResponseEntity<Map<String, Object>> buscarUsuarioNombre(@PathVariable String nombreUsuario) {
         Map<String, Object> response = new HashMap<>();
-
+    
         try {
-            String busqueda = (String) obj.get("busqueda");
-
             // Validar que el término de búsqueda esté presente
-            if (busqueda == null || busqueda.trim().isEmpty()) {
+            if (nombreUsuario == null || nombreUsuario.trim().isEmpty()) {
                 response.put("mensaje", "El término de búsqueda es obligatorio");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-
+    
             // Realizar la búsqueda
-            List<Map<String, Object>> usuarios = administradorService.buscarUsuarioNombre(busqueda.trim());
-
+            List<Map<String, Object>> usuarios = administradorService.buscarUsuarioNombre(nombreUsuario.trim());
+    
             // Preparar la respuesta
             if (usuarios.isEmpty()) {
                 response.put("mensaje", "No se encontraron usuarios que coincidan con la búsqueda");
@@ -627,16 +620,14 @@ public class AdministradorController {
                 response.put("mensaje", "Usuarios encontrados");
                 response.put("usuarios", usuarios);
             }
-
+    
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             response.put("mensaje", "Error al buscar usuarios");
             response.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
     /**
      * Endpoint para obtener todas las solicitudes de usuarios que quieren ser instructores.
      * 
@@ -658,13 +649,10 @@ public class AdministradorController {
             
             if (solicitudes.isEmpty()) {
                 response.put("mensaje", "No hay solicitudes de instructor");
-                response.put("solicitudes", solicitudes); // Incluimos la lista vacía
-            } else {
-                response.put("mensaje", "Solicitudes recuperadas exitosamente");
-                response.put("solicitudes", solicitudes);
+                return ResponseEntity.ok(response);
+            } else { // Correcto, agregamos la lista de solicitudes al mapa
+                return ResponseEntity.ok(solicitudes);
             }
-            
-            return ResponseEntity.ok(response); // Siempre retornamos 200 OK
             
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
@@ -673,6 +661,59 @@ public class AdministradorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    
 
 
+    /**
+     * Endpoint para aceptar una solicitud de instructor.
+     * 
+     * Este método permite al administrador aprobar una solicitud de instructor.
+     * Al aprobarla, se cambia el estatus de la solicitud a "aprobada" y se crea
+     * un nuevo usuario con rol de instructor en el sistema.
+     *
+     * @param payload Objeto que contiene el ID de la solicitud de instructor
+     * @return ResponseEntity con el mensaje de éxito o error
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Solicitud aprobada correctamente.
+     *         - `400 Bad Request`: Si falta el ID de la solicitud.
+     *         - `404 Not Found`: Si no se encuentra la solicitud.
+     *         - `500 Internal Server Error`: Si ocurre un error al procesar la aprobación.
+     */
+    @PostMapping("/aceptar-instructor")
+    public ResponseEntity<?> aceptarInstructor(@RequestBody Map<String, Integer> payload) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Integer idSolicitudInstructor = payload.get("idSolicitudInstructor");
+            if (idSolicitudInstructor == null) {
+                response.put("mensaje", "El ID de solicitud de instructor es requerido");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            // Llamar al servicio para aceptar al instructor
+            String resultado = administradorService.aceptarInstructor(idSolicitudInstructor);
+            
+            // Verificar el resultado
+            if (resultado.contains("no existe") || resultado.contains("no encontrada")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            } else if (resultado.contains("aceptado exitosamente") || resultado.contains("aprobado exitosamente")) {
+                response.put("mensaje", resultado);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("mensaje", "Error al procesar la solicitud: " + resultado);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (DataAccessException e) {
+            response.put("mensaje", "Error en la base de datos al intentar aceptar al instructor");
+            response.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (Exception e) {
+            response.put("mensaje", "Error al procesar la solicitud");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
