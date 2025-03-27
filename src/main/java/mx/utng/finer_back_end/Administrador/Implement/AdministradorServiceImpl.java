@@ -1,6 +1,7 @@
 package mx.utng.finer_back_end.Administrador.Implement;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;  // Add this import
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.KeyHolder;
@@ -106,12 +107,12 @@ public class AdministradorServiceImpl implements AdministradorService {
                 );
                 
                 System.out.println("Estado actual de la solicitud: " + estadoActual);
-                
-                if ("rechazado".equals(estadoActual)) {
+
+                if ("rechazada".equals(estadoActual)) {
                     return "La solicitud ya ha sido rechazada anteriormente";
                 }
-                
-                if ("aprobado".equals(estadoActual)) {
+
+                if ("aprobada".equals(estadoActual)) {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
                 
@@ -247,8 +248,12 @@ public class AdministradorServiceImpl implements AdministradorService {
                     nombreCategoria
                 );
                 
+<<<<<<< HEAD
                 // Nota: La tabla log_categoria no existe en el esquema actual de la base de datos
                 // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo normal
+=======
+                
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
                 
                 return "Categoría '" + nombreCategoria + "' creada exitosamente con ID: " + idCategoria;
             } else {
@@ -385,6 +390,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Log for debugging
             System.out.println("Estado actual de la solicitud: " + estadoActual);
+<<<<<<< HEAD
             
             if ("aprobada".equals(estadoActual)) {
                 jdbcTemplate.execute("COMMIT");
@@ -393,6 +399,14 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             if ("rechazada".equals(estadoActual)) {
                 jdbcTemplate.execute("COMMIT");
+=======
+
+            if ("aprobada".equals(estadoActual)) {
+                return "La solicitud ya ha sido aprobada anteriormente";
+            }
+
+            if ("rechazada".equals(estadoActual)) {
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
                 return "No se puede aprobar una solicitud que ya ha sido rechazada";
             }
             
@@ -438,6 +452,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Update the status and course ID in a single operation
             int filasAfectadas = jdbcTemplate.update(
+<<<<<<< HEAD
                 "UPDATE solicitudcurso SET estatus = 'aprobada', id_curso = ? WHERE id_solicitud_curso = ? AND id_curso IS NULL",
                 idCurso,
                 idSolicitudCurso
@@ -445,6 +460,12 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             jdbcTemplate.execute("COMMIT");
             
+=======
+
+                    "UPDATE solicitudcurso SET estatus = 'aprobada' WHERE id_solicitud_curso = ?",
+                    idSolicitudCurso);
+
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
             if (filasAfectadas > 0) {
                 return "El curso ha sido aprobado exitosamente y asociado al catálogo con ID: " + idCurso;
             } else {
@@ -482,42 +503,27 @@ public class AdministradorServiceImpl implements AdministradorService {
     @Transactional
     public String bloquearUsuario(String nombreUsuario) {
         try {
-            // Verificar si el usuario existe
-            Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM usuario WHERE nombre_usuario = ?", 
+            // Get user ID by username
+            Integer idUsuario = jdbcTemplate.queryForObject(
+                "SELECT id_usuario FROM usuario WHERE nombre_usuario = ?", 
                 Integer.class, 
                 nombreUsuario
             );
-            
-            if (count == null || count == 0) {
+    
+            if (idUsuario == null) {
                 return "No se encontró el usuario con el nombre de usuario proporcionado";
             }
-            
-            // Verificar el rol actual del usuario
-            Integer idRolActual = jdbcTemplate.queryForObject(
-                "SELECT id_rol FROM usuario WHERE nombre_usuario = ?",
-                Integer.class,
-                nombreUsuario
+    
+            // Call database function to block user
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT bloquear_usuario(?)", 
+                String.class, 
+                idUsuario
             );
-            
-            // Verificar si ya está bloqueado (asumiendo que el id_rol para 'bloqueado' es 4)
-            if (idRolActual != null && idRolActual == 4) {
-                return "El usuario ya se encuentra bloqueado";
-            }
-            
-            // Actualizar el rol del usuario a 'bloqueado'
-            int filasAfectadas = jdbcTemplate.update(
-                "UPDATE usuario SET id_rol = 4 WHERE nombre_usuario = ?", 
-                nombreUsuario
-            );
-            
-            if (filasAfectadas > 0) {
-                return "Usuario bloqueado exitosamente";
-            } else {
-                return "Error al bloquear el usuario";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    
+            return resultado;
+    
+        } catch (DataAccessException e) {
             return "Error al bloquear el usuario: " + e.getMessage();
         }
     }
@@ -541,7 +547,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Obtener los datos del usuario
             Map<String, Object> usuario = jdbcTemplate.queryForMap(
-                "SELECT u.*, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
+                "SELECT u.*, r.rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
                 nombreUsuario
             );
             
@@ -564,22 +570,23 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
+    public List<Map<String, Object>> buscarUsuarioNombre(String nombreUsuario) {
         try {
-            // Buscar usuarios por coincidencia en nombre, apellido paterno o apellido materno
-            String sql = "SELECT u.*, r.nombre_rol FROM usuario u " +
+            // Buscar usuarios por coincidencia en nombre
+            String sql = "SELECT u.*, r.rol FROM usuario u " +
                          "JOIN rol r ON u.id_rol = r.id_rol " +
                          "WHERE LOWER(u.nombre) LIKE LOWER(?) OR " +
                          "LOWER(u.apellido_paterno) LIKE LOWER(?) OR " +
-                         "LOWER(u.apellido_materno) LIKE LOWER(?)";
+                         "LOWER(u.apellido_materno) LIKE LOWER(?) OR " +
+                         "LOWER(u.nombre_usuario) LIKE LOWER(?) OR " +
+                         "LOWER(CONCAT(u.nombre, ' ', u.apellido_paterno)) LIKE LOWER(?) OR " +
+                         "LOWER(CONCAT(u.nombre, ' ', u.apellido_materno)) LIKE LOWER(?)";
             
-            String termino = "%" + busqueda + "%";
+            String termino = "%" + nombreUsuario + "%";
             
-            return jdbcTemplate.queryForList(sql, termino, termino, termino);
+            return jdbcTemplate.queryForList(sql, 
+                termino, termino, termino, termino, termino, termino);
         } catch (Exception e) {
             e.printStackTrace();
             return List.of(Map.of("error", "Error al buscar usuarios: " + e.getMessage()));
@@ -649,10 +656,13 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
+<<<<<<< HEAD
     
     /**
      * {@inheritDoc}
      */
+=======
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
     @Override
     @Transactional
     public String aceptarInstructor(Integer idSolicitudInstructor) {
@@ -682,19 +692,7 @@ public class AdministradorServiceImpl implements AdministradorService {
                 "SELECT * FROM solicitudinstructor WHERE id_solicitud_instructor = ?",
                 idSolicitudInstructor);
                 
-            // Crear un nuevo usuario con rol de instructor
-            jdbcTemplate.update(
-                "INSERT INTO usuario (id_rol, nombre, apellido_paterno, apellido_materno, correo, contrasenia, nombre_usuario, telefono, estatus) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')",
-                2, // Rol de instructor (id_rol = 2)
-                instructor.get("nombre"),
-                instructor.get("apellido_paterno"),
-                instructor.get("apellido_materno"),
-                instructor.get("correo"),
-                instructor.get("contrasenia"),
-                instructor.get("nombre_usuario"),
-                instructor.get("telefono")
-            );
+            
             
             // Llamar a la función de PostgreSQL para actualizar el estado de la solicitud
             try {
@@ -761,7 +759,13 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
+<<<<<<< HEAD
     @Override
+=======
+
+    
+    @Transactional(readOnly = true)
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
     public List<Map<String, Object>> verSolicitudInstructor() {
         // Implement the method to get all instructor requests
         try {
@@ -795,6 +799,7 @@ public class AdministradorServiceImpl implements AdministradorService {
         return jdbcTemplate.queryForList(sql);
     }
 
+<<<<<<< HEAD
     /**
      * Aprueba una solicitud de categoría y crea la categoría en el sistema.
      * 
@@ -850,4 +855,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             return "Error al aprobar la solicitud de categoría: " + e.getMessage();
         }
     }
+=======
+>>>>>>> 5c33c0f89bd33a731df0256c3f3e2a3a81fceee2
 }
