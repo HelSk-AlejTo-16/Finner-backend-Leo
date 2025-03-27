@@ -216,21 +216,7 @@ public class AdministradorServiceImpl implements AdministradorService {
                     nombreCategoria
                 );
                 
-                // Nota: La tabla log_categoria no existe en el esquema actual de la base de datos
-                // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo normal
-                // Si en el futuro se implementa esta tabla, se puede descomentar el código siguiente:
-                /*
-                try {
-                    jdbcTemplate.update(
-                        "INSERT INTO log_categoria (id_categoria, id_usuario_instructor, id_usuario_admin, fecha_creacion) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", 
-                        idCategoria, 
-                        idUsuarioInstructor, 
-                        idUsuarioAdmin
-                    );
-                } catch (Exception logError) {
-                    System.err.println("Error al registrar en log_categoria: " + logError.getMessage());
-                }
-                */
+                
                 
                 return "Categoría '" + nombreCategoria + "' creada exitosamente con ID: " + idCategoria;
             } else {
@@ -585,7 +571,6 @@ public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
             return List.of();
         }
     }
-
     @Override
     @Transactional
     public String aceptarInstructor(Integer idSolicitudInstructor) {
@@ -615,19 +600,7 @@ public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
                 "SELECT * FROM solicitudinstructor WHERE id_solicitud_instructor = ?",
                 idSolicitudInstructor);
                 
-            // Crear un nuevo usuario con rol de instructor
-            jdbcTemplate.update(
-                "INSERT INTO usuario (id_rol, nombre, apellido_paterno, apellido_materno, correo, contrasenia, nombre_usuario, telefono, estatus) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')",
-                2, // Rol de instructor (id_rol = 2)
-                instructor.get("nombre"),
-                instructor.get("apellido_paterno"),
-                instructor.get("apellido_materno"),
-                instructor.get("correo"),
-                instructor.get("contrasenia"),
-                instructor.get("nombre_usuario"),
-                instructor.get("telefono")
-            );
+            
             
             // Llamar a la función de PostgreSQL para actualizar el estado de la solicitud
             try {
@@ -693,6 +666,8 @@ public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
             System.err.println("Error al enviar correo de aceptación de instructor: " + e.getMessage());
         }
     }
+
+
     
     @Transactional(readOnly = true)
     public List<Map<String, Object>> verSolicitudInstructor() {

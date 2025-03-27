@@ -653,13 +653,10 @@ public ResponseEntity<Map<String, String>> bloquearUsuario(@RequestBody Map obj)
             
             if (solicitudes.isEmpty()) {
                 response.put("mensaje", "No hay solicitudes de instructor");
-                response.put("solicitudes", solicitudes); // Incluimos la lista vacía
-            } else {
-                response.put("mensaje", "Solicitudes recuperadas exitosamente");
-                response.put("solicitudes", solicitudes);
+                return ResponseEntity.ok(response);
+            } else { // Correcto, agregamos la lista de solicitudes al mapa
+                return ResponseEntity.ok(solicitudes);
             }
-            
-            return ResponseEntity.ok(response); // Siempre retornamos 200 OK
             
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
@@ -668,6 +665,7 @@ public ResponseEntity<Map<String, String>> bloquearUsuario(@RequestBody Map obj)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    
 
 
     /**
