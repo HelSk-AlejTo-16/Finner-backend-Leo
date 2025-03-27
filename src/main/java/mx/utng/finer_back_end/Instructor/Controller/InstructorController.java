@@ -73,7 +73,7 @@ public class InstructorController {
          String nombreUsuario 
     ){
         try{
-            ResponseEntity<String> mensaje = instructorModificarService.actualizarPerfilInstuctor(idUsuario, nombre, apellidoPaterno,  apellidoMaterno,
+            ResponseEntity<String> mensaje = instructorModificarService.actualizarPerfilInstructor(idUsuario, nombre, apellidoPaterno,  apellidoMaterno,
              nombreUsuario,  correo, telefono,direccion);
             return mensaje;
         }catch(Exception e){
