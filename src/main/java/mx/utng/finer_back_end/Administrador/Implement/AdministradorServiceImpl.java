@@ -1,6 +1,7 @@
 package mx.utng.finer_back_end.Administrador.Implement;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;  // Add this import
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -410,42 +411,27 @@ public class AdministradorServiceImpl implements AdministradorService {
     @Transactional
     public String bloquearUsuario(String nombreUsuario) {
         try {
-            // Verificar si el usuario existe
-            Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM usuario WHERE nombre_usuario = ?", 
+            // Get user ID by username
+            Integer idUsuario = jdbcTemplate.queryForObject(
+                "SELECT id_usuario FROM usuario WHERE nombre_usuario = ?", 
                 Integer.class, 
                 nombreUsuario
             );
-            
-            if (count == null || count == 0) {
+    
+            if (idUsuario == null) {
                 return "No se encontró el usuario con el nombre de usuario proporcionado";
             }
-            
-            // Verificar el rol actual del usuario
-            Integer idRolActual = jdbcTemplate.queryForObject(
-                "SELECT id_rol FROM usuario WHERE nombre_usuario = ?",
-                Integer.class,
-                nombreUsuario
+    
+            // Call database function to block user
+            String resultado = jdbcTemplate.queryForObject(
+                "SELECT bloquear_usuario(?)", 
+                String.class, 
+                idUsuario
             );
-            
-            // Verificar si ya está bloqueado (asumiendo que el id_rol para 'bloqueado' es 4)
-            if (idRolActual != null && idRolActual == 4) {
-                return "El usuario ya se encuentra bloqueado";
-            }
-            
-            // Actualizar el rol del usuario a 'bloqueado'
-            int filasAfectadas = jdbcTemplate.update(
-                "UPDATE usuario SET id_rol = 4 WHERE nombre_usuario = ?", 
-                nombreUsuario
-            );
-            
-            if (filasAfectadas > 0) {
-                return "Usuario bloqueado exitosamente";
-            } else {
-                return "Error al bloquear el usuario";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    
+            return resultado;
+    
+        } catch (DataAccessException e) {
             return "Error al bloquear el usuario: " + e.getMessage();
         }
     }
@@ -469,7 +455,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Obtener los datos del usuario
             Map<String, Object> usuario = jdbcTemplate.queryForMap(
-                "SELECT u.*, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
+                "SELECT u.*, r.rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol WHERE u.nombre_usuario = ?",
                 nombreUsuario
             );
             
@@ -492,27 +478,35 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
-        try {
-            // Buscar usuarios por coincidencia en nombre, apellido paterno o apellido materno
-            String sql = "SELECT u.*, r.nombre_rol FROM usuario u " +
-                         "JOIN rol r ON u.id_rol = r.id_rol " +
-                         "WHERE LOWER(u.nombre) LIKE LOWER(?) OR " +
-                         "LOWER(u.apellido_paterno) LIKE LOWER(?) OR " +
-                         "LOWER(u.apellido_materno) LIKE LOWER(?)";
-            
-            String termino = "%" + busqueda + "%";
-            
-            return jdbcTemplate.queryForList(sql, termino, termino, termino);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of(Map.of("error", "Error al buscar usuarios: " + e.getMessage()));
-        }
+public List<Map<String, Object>> buscarUsuarioNombre(String busqueda) {
+    try {
+   
+        String sql = "SELECT u.*, r.rol FROM usuario u " +
+                     "JOIN rol r ON u.id_rol = r.id_rol " +
+                     "WHERE (LOWER(u.nombre) = LOWER(?) OR " +
+                     "       LOWER(u.apellido_paterno) = LOWER(?) OR " +
+                     "       LOWER(u.apellido_materno) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.nombre, ' ', u.apellido_paterno)) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.nombre, ' ', u.apellido_materno)) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.apellido_paterno, ' ', u.nombre)) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.apellido_materno, ' ', u.nombre)) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) = LOWER(?) OR " +
+                     "       LOWER(CONCAT(u.apellido_paterno, ' ', u.apellido_materno, ' ', u.nombre)) = LOWER(?))";
+        
+      
+        String termino = busqueda.trim();
+        
+   
+        return jdbcTemplate.queryForList(sql, 
+            termino, termino, termino, 
+            termino, termino, termino, 
+            termino, termino, termino);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return List.of(Map.of("error", "Error al buscar usuarios: " + e.getMessage()));
     }
+}
     
     /**
      * {@inheritDoc}
