@@ -683,7 +683,7 @@ public class AdministradorServiceImpl implements AdministradorService {
                 "apellido_paterno, apellido_materno, correo, " +
                 "nombre_usuario, telefono, direccion, " +
                 "fecha_solicitud, estatus_solicitud " +
-                "FROM SolicitudInstructor " +
+                "FROM solicitudinstructor " +
                 "ORDER BY fecha_solicitud ASC"
             );
         } catch (Exception e) {
