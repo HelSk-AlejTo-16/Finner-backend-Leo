@@ -254,7 +254,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             if (filasAfectadas > 0) {
                 // Obtener el ID de la categoría recién creada
                 Integer idCategoria = jdbcTemplate.queryForObject(
-<<<<<<< HEAD
                     "SELECT id_categoria FROM categoria WHERE nombre_categoria = ?", 
                     Integer.class, 
                     nombreCategoria
@@ -263,17 +262,6 @@ public class AdministradorServiceImpl implements AdministradorService {
                 // Nota: La tabla log_categoria no existe en el esquema actual de la base de datos
                 // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo normal
                 
-=======
-                        "SELECT id_categoria FROM categoria WHERE nombre_categoria = ?",
-                        Integer.class,
-                        nombreCategoria);
-
-                // Nota: La tabla log_categoria no existe en el esquema actual de la base de
-                // datos
-                // Por lo tanto, no intentamos registrar en ella y continuamos con el flujo
-                // normal
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
                 return "Categoría '" + nombreCategoria + "' creada exitosamente con ID: " + idCategoria;
             } else {
                 return "Error: No se pudo crear la categoría";
@@ -402,10 +390,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 
             // Log for debugging
             System.out.println("Estado actual de la solicitud: " + estadoActual);
-<<<<<<< HEAD
             
-=======
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
             if ("aprobada".equals(estadoActual)) {
                 jdbcTemplate.execute("COMMIT");
                 return "La solicitud ya ha sido aprobada anteriormente";
@@ -413,10 +398,6 @@ public class AdministradorServiceImpl implements AdministradorService {
 
             if ("rechazada".equals(estadoActual)) {
                 jdbcTemplate.execute("COMMIT");
-<<<<<<< HEAD
-=======
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
                 return "No se puede aprobar una solicitud que ya ha sido rechazada";
             }
 
@@ -459,7 +440,6 @@ public class AdministradorServiceImpl implements AdministradorService {
 
             // Update the status and course ID in a single operation
             int filasAfectadas = jdbcTemplate.update(
-<<<<<<< HEAD
                 "UPDATE solicitudcurso SET estatus = 'aprobada', id_curso = ? WHERE id_solicitud_curso = ? AND id_curso IS NULL",
                 idCurso,
                 idSolicitudCurso
@@ -467,14 +447,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             jdbcTemplate.execute("COMMIT");
             
-=======
-                    "UPDATE solicitudcurso SET estatus = 'aprobada', id_curso = ? WHERE id_solicitud_curso = ? AND id_curso IS NULL",
-                    idCurso,
-                    idSolicitudCurso);
-
-            jdbcTemplate.execute("COMMIT");
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
             if (filasAfectadas > 0) {
                 return "El curso ha sido aprobado exitosamente y asociado al catálogo con ID: " + idCurso;
             } else {
@@ -659,18 +631,10 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
-<<<<<<< HEAD
     
     /**
      * {@inheritDoc}
      */
-=======
-
-    /**
-     * {@inheritDoc}
-     */
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
     @Override
     @Transactional
     public String aceptarInstructor(Integer idSolicitudInstructor) {
@@ -741,7 +705,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             String nombreInstructor = (String) solicitudInfo.get("nombre") + " " +
                     (String) solicitudInfo.get("apellido_paterno");
             String nombreUsuario = (String) solicitudInfo.get("nombre_usuario");
-<<<<<<< HEAD
             
             // Crear un mensaje MIME para soportar contenido HTML
             MimeMessage mensaje = javaMailSender.createMimeMessage();
@@ -787,28 +750,6 @@ public class AdministradorServiceImpl implements AdministradorService {
                 helper.addInline("finerLogo", dataSource);
             }
             
-=======
-
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom("finner.oficial.2025@gmail.com");
-            mensaje.setTo(correoInstructor);
-            mensaje.setSubject("¡Felicidades! Su solicitud como instructor ha sido aprobada - Finner");
-
-            String cuerpoMensaje = "Estimado/a " + nombreInstructor + ",\n\n" +
-                    "Nos complace informarle que su solicitud para convertirse en instructor en la plataforma Finner ha sido aprobada.\n\n"
-                    +
-                    "Ahora puede acceder a la plataforma con su nombre de usuario: " + nombreUsuario + "\n\n" +
-                    "Como instructor, podrá crear y gestionar cursos, interactuar con los alumnos y contribuir al crecimiento de nuestra comunidad educativa.\n\n"
-                    +
-                    "Si tiene alguna pregunta o necesita asistencia, no dude en contactar a nuestro equipo de soporte.\n\n"
-                    +
-                    "¡Le damos la bienvenida al equipo de instructores de Finner!\n\n" +
-                    "Atentamente,\n" +
-                    "El equipo de Finner";
-
-            mensaje.setText(cuerpoMensaje);
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
             javaMailSender.send(mensaje);
             System.out.println("Correo de aceptación enviado a: " + correoInstructor);
         } catch (Exception e) {
@@ -819,10 +760,6 @@ public class AdministradorServiceImpl implements AdministradorService {
     }
 
     @Override
-<<<<<<< HEAD
-=======
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
     public List<Map<String, Object>> verSolicitudInstructor() {
         // Implement the method to get all instructor requests
         try {
@@ -856,10 +793,6 @@ public class AdministradorServiceImpl implements AdministradorService {
         return jdbcTemplate.queryForList(sql);
     }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> df7fad274ae4847ea0bf4b356a4b474c9adef599
     /**
      * Aprueba una solicitud de categoría y crea la categoría en el sistema.
      * 
