@@ -16,7 +16,6 @@ import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoNombreAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO; 
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
-import mx.utng.finer_back_end.Documentos.CursoDocumento;
 import mx.utng.finer_back_end.Documentos.TemaDocumento;
 
 
