@@ -74,12 +74,12 @@ public class AdministradorServiceImpl implements AdministradorService {
                 );
                 
                 System.out.println("Estado actual de la solicitud: " + estadoActual);
-                
-                if ("rechazado".equals(estadoActual)) {
+
+                if ("rechazada".equals(estadoActual)) {
                     return "La solicitud ya ha sido rechazada anteriormente";
                 }
-                
-                if ("aprobado".equals(estadoActual)) {
+
+                if ("aprobada".equals(estadoActual)) {
                     return "No se puede rechazar una solicitud que ya ha sido aprobada";
                 }
                 
@@ -340,12 +340,12 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Log for debugging
             System.out.println("Estado actual de la solicitud: " + estadoActual);
-            
-            if ("aprobado".equals(estadoActual)) {
+
+            if ("aprobada".equals(estadoActual)) {
                 return "La solicitud ya ha sido aprobada anteriormente";
             }
-            
-            if ("rechazado".equals(estadoActual)) {
+
+            if ("rechazada".equals(estadoActual)) {
                 return "No se puede aprobar una solicitud que ya ha sido rechazada";
             }
             
@@ -357,10 +357,10 @@ public class AdministradorServiceImpl implements AdministradorService {
             
             // Update the status to 'aprobado' instead of 'aprobada'
             int filasAfectadas = jdbcTemplate.update(
-                "UPDATE solicitudcurso SET estatus = 'aprobado' WHERE id_solicitud_curso = ?",
-                idSolicitudCurso
-            );
-            
+
+                    "UPDATE solicitudcurso SET estatus = 'aprobada' WHERE id_solicitud_curso = ?",
+                    idSolicitudCurso);
+
             if (filasAfectadas > 0) {
                 // Create the course in the curso table
                 int cursoCreado = jdbcTemplate.update(
@@ -577,10 +577,6 @@ public class AdministradorServiceImpl implements AdministradorService {
             return List.of();
         }
     }
-    
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public String aceptarInstructor(Integer idSolicitudInstructor) {
@@ -677,10 +673,23 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
     }
 
-    @Override
-    public List<Map<String, Object>> verSolicitudInstructor() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'verSolicitudInstructor'");
-    }
+
     
-} // Add this closing brace for the class
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> verSolicitudInstructor() {
+        try {
+            return jdbcTemplate.queryForList(
+                "SELECT id_solicitud_instructor, id_rol, nombre, " +
+                "apellido_paterno, apellido_materno, correo, " +
+                "nombre_usuario, telefono, direccion, " +
+                "fecha_solicitud, estatus_solicitud " +
+                "FROM SolicitudInstructor " +
+                "ORDER BY fecha_solicitud ASC"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+}
