@@ -725,17 +725,10 @@ public class AdministradorServiceImpl implements AdministradorService {
     }
 
     @Override
-
     public List<Map<String, Object>> verSolicitudInstructor() {
-        // Implement the method to get all instructor requests
         try {
-            String sql = "SELECT si.id_solicitud_instructor, si.nombre, si.apellido_paterno, " +
-                    "si.apellido_materno, si.correo, si.telefono, si.nombre_usuario, " +
-                    "si.estatus_solicitud, si.fecha_solicitud " +
-                    "FROM solicitudinstructor si " +
-                    "ORDER BY si.fecha_solicitud DESC";
-
-            return jdbcTemplate.queryForList(sql);
+    
+            return jdbcTemplate.queryForList("SELECT * FROM ver_solicitud_instructor()");
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
