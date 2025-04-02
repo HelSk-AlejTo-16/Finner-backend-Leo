@@ -4,11 +4,12 @@ import mx.utng.finer_back_end.Administrador.Services.SolicitudCategoriaService;
 import mx.utng.finer_back_end.Documentos.SolicitudCategoriaDocumento;
 import mx.utng.finer_back_end.Administrador.Dao.CategoriaDao;
 import mx.utng.finer_back_end.Administrador.Dao.SolicitudCategoriaDao;
+import mx.utng.finer_back_end.Administrador.Documentos.SolicitudCategoriaDatos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mail.SimpleMailMessage;
+//import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.activation.FileDataSource;
 import jakarta.mail.internet.MimeMessage;
 
+import java.sql.Timestamp;
+//import java.sql.Date;
 import java.time.LocalDate;
+//import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 
 @Service
 public class SolicitudCategoriaServiceImpl implements SolicitudCategoriaService {
@@ -37,6 +43,7 @@ public class SolicitudCategoriaServiceImpl implements SolicitudCategoriaService 
     private JdbcTemplate jdbcTemplate;
 
     @Override
+
 @Transactional
 public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, boolean aprobar) {
     try {
@@ -48,6 +55,7 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
         if (count == null || count == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No se encontró la solicitud de categoría con el ID proporcionado.");
+
         }
 
         // Obtener estado actual de la solicitud
@@ -87,6 +95,7 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
             asunto = "Solicitud de Categoría Rechazada";
             motivoRechazo = "Categoria No cumple con lo requerido"; // Cambia esto con el motivo real
             mensaje = "Su solicitud para la categoría '" + nombreCategoria + "' ha sido rechazada. " + motivoRechazo;
+
         }
 
         // Se asume que hay un método para obtener el correo del usuario instructor
@@ -126,6 +135,7 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
      */
     private void enviarCorreoNotificacion(String destinatario, String asunto, String motivoRechazo, boolean aprobado, String nombreCategoria) {
         try {
+
             MimeMessage mensaje = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mensaje, true);
             helper.setFrom("finner.oficial.2025@gmail.com");
@@ -183,6 +193,7 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
                     String.class, idUsuarioInstructor);
         } catch (Exception e) {
             return null;
+
         }
     }
 
@@ -192,8 +203,20 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
     }
 
     @Override
-    public List<SolicitudCategoriaDocumento> obtenerTodasLasSolicitudes() {
-        return solicitudCategoriaDao.findAll();
+    public List<SolicitudCategoriaDatos> obtenerTodasLasSolicitudes() {
+        List<Object[]> resultados = solicitudCategoriaDao.obtenerSolicitudes();
+
+        return resultados.stream().map(obj -> new SolicitudCategoriaDatos(
+                (Integer) obj[0], // id_solicitud_categoria
+                (Integer) obj[1], // id_usuario_instructor
+                (String) obj[2], // nombre_categoria
+                (String) obj[3], // descripcion
+                (String) obj[4], // estatus
+                (Timestamp) obj[5], // fecha_solicitud
+                (String) obj[6], // nombre
+                (String) obj[7], // apellido_paterno
+                (String) obj[8] // apellido_materno
+        )).collect(Collectors.toList());
     }
 
     @Override
@@ -202,8 +225,10 @@ public ResponseEntity<String> aprobarDesaprobarCategoria(Integer idSolicitud, bo
         LocalDate fechaLimite = LocalDate.now().minusDays(30);
 
         // Buscar todas las solicitudes con estatus "rechazado" y fecha mayor a 30 días
-        List<SolicitudCategoriaDocumento> solicitudesRechazadas =
-                solicitudCategoriaDao.findByEstatusAndFechaSolicitudBefore("rechazado", fechaLimite);
+
+        List<SolicitudCategoriaDocumento> solicitudesRechazadas = solicitudCategoriaDao
+                .findByEstatusAndFechaSolicitudBefore("rechazado", fechaLimite);
+
 
         // Eliminar las solicitudes encontradas
         for (SolicitudCategoriaDocumento solicitud : solicitudesRechazadas) {
