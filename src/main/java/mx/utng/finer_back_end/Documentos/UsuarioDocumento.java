@@ -46,9 +46,12 @@ public class UsuarioDocumento {
 
     @Column(name = "direccion")
     private String direccion;
-
+    
     @Column(name = "cedula_pdf")
-    private String cedulaPdf; // Puedes descomentar esto si es necesario
+    private String cedulaPdf; 
+
+
+
 
     @Column(name = "estatus")
     private String estatus;
