@@ -11,8 +11,8 @@ import java.util.List;
 
 @Repository
 public interface CursoAlumnoDao extends JpaRepository<CursoDocumento, Long> {
-        @Query(value = "SELECT * FROM obtener_detalles_curso_alumno(:p_id_curso)", nativeQuery = true)
-        List<Object[]> verCursoDetalles(@Param("p_id_curso") Integer p_id_curso);
+        @Query(value = "SELECT * FROM ver_detalles_curso(:p_titulo_curso)", nativeQuery = true)
+        List<Object[]> verCursoDetalles(@Param("p_titulo_curso") String p_titulo_curso);
 
         @Query(value = "SELECT validar_reinscripcion(:p_id_curso, :p_id_usuario)", nativeQuery = true)
         Boolean validarReinscripcionAlumno(@Param("p_id_curso") Integer p_id_curso,
@@ -49,5 +49,13 @@ public interface CursoAlumnoDao extends JpaRepository<CursoDocumento, Long> {
 
         @Query(value = "SELECT * FROM obtener_temas_curso(:p_id_curso)", nativeQuery = true)
         List<Object[]> getTemas(@Param("p_id_curso") Integer p_id_curso);
+
+        @Query(value = "SELECT * FROM obtener_cursos_alumno(:p_id_usuario)", nativeQuery = true)
+        List<Object[]> obtenerCursosAlumno(@Param("p_id_usuario") Integer idAlumno);
+
+
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM usuario WHERE id_usuario = :id_usuario AND id_rol = 3)", nativeQuery = true)
+    Boolean esAlumno(@Param("id_usuario") Integer idUsuario);
+
 
 }
