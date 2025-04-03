@@ -50,6 +50,9 @@ public class UsuarioDocumento {
     @Column(name = "cedula_pdf")
     private String cedulaPdf; 
 
+
+
+
     @Column(name = "estatus")
     private String estatus;
      // Constructor sin parámetros (obligatorio para JPA)
