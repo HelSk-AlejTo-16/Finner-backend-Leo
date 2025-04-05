@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import mx.utng.finer_back_end.Documentos.SolicitudTemaDocumento;
 import mx.utng.finer_back_end.Instructor.Documentos.CursoSolicitadoDTOInstructor;
 import mx.utng.finer_back_end.Instructor.Documentos.SolicitudCursoRequest;
 import mx.utng.finer_back_end.Instructor.Services.SolicitudCursoServiceInstructor;
@@ -57,12 +58,42 @@ public class SolicitudCursoControllerInstructor {
 
     @PutMapping("/solicitud-curso/editar")
     public ResponseEntity<?> editarSolicitudCurso(@RequestBody SolicitudCursoRequest request) {
-        boolean success = solicitudCursoService.editarSolicitudCurso(request);
-        if (success) {
-            return ResponseEntity.ok("Edición realizada con éxito.");
+        Map<String, Object> response = solicitudCursoService.editarSolicitudCurso(request);
+        if ("success".equals(response.get("estatus"))) {
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al editar la solicitud.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @PutMapping("/solicitud-curso/enviar-a-revision")
+    public ResponseEntity<?> enviarARevision(@RequestParam Integer id_solicitud_curso) {
+        Map<String, Object> response = solicitudCursoService.enviarARevision(id_solicitud_curso);
+        if ("success".equals(response.get("estatus"))) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/ver-solicitudes/tema")
+    public ResponseEntity<?> verTemasSolicitadosByIdCurso(@RequestParam Integer idSolicitudCurso) {
+        try {
+            List<SolicitudTemaDocumento> temasSolicitados = solicitudCursoService
+                    .verSolicitudTemaByIDCurso(idSolicitudCurso);
+
+            if (temasSolicitados.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("mensaje", "No se encontraron temas solicitados para este curso.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            return ResponseEntity.ok(temasSolicitados);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Error al obtener los cursos solicitados: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }
