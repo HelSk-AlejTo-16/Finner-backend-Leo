@@ -53,24 +53,7 @@ public class AlumnoController {
     }
 
     @PutMapping("/editar-cuenta")
-<<<<<<< HEAD
-    public ResponseEntity<String> actualizarPerfilAlumno(
-        @RequestParam Integer idUsuario,
-        @RequestParam String nombre, @RequestParam 
-        String apellidoPaterno, 
-        @RequestParam String apellidoMaterno,
-        @RequestParam String correo,
-        @RequestParam String contrasenia,@RequestParam
-         String nombreUsuario 
-    ){                                  
-        try{
-            ResponseEntity<String> mensaje = alumnoModificarService.actualizarPerfilAlumno(idUsuario, nombre,
-             apellidoPaterno,  apellidoMaterno,
-             nombreUsuario,  correo, contrasenia);
-            return mensaje;
-        }catch(Exception e){
-            return ResponseEntity.status(500).body("Error de conexión"+e.getMessage());
-=======
+
     public ResponseEntity<Map<String, Object>> actualizarPerfilAlumno(
             @RequestParam Integer idUsuario,
             @RequestParam String nombre,
@@ -90,7 +73,7 @@ public class AlumnoController {
             response.put("success", false);
             response.put("message", "Error de conexión: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
->>>>>>> 31382fefbd20bdd0e297e5ec07b05b3ca92fa8a6
+
         }
     }
 
