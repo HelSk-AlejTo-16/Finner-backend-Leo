@@ -64,27 +64,29 @@ public class InstructorController {
     }
 
     @PutMapping("/editar-cuenta")
-    public ResponseEntity<String> actualizarPerfilInstructor(
-        @RequestParam Integer idUsuario,
-        @RequestParam String nombre, @RequestParam 
-        String apellidoPaterno, 
-        @RequestParam String apellidoMaterno,
-        @RequestParam String correo,
-        @RequestParam String telefono,
-        @RequestParam String direccion,
-        
-         String nombreUsuario 
-    ){
-        try{
-            ResponseEntity<String> mensaje = instructorModificarService.actualizarPerfilInstructor(idUsuario, nombre, 
-            apellidoPaterno,  apellidoMaterno,
-             nombreUsuario,  correo, telefono,direccion);
-            return mensaje;
-        }catch(Exception e){
-            return ResponseEntity.status(500).body("Error de conexión"+e.getMessage());
+    public ResponseEntity<Map<String, Object>> actualizarPerfilInstructor(
+            @RequestParam Integer idUsuario,
+            @RequestParam String nombre,
+            @RequestParam String apellidoPaterno,
+            @RequestParam String apellidoMaterno,
+            @RequestParam String correo,
+            @RequestParam String telefono,
+            @RequestParam String direccion,
+            @RequestParam String nombreUsuario,
+            @RequestParam String contrasenia,
+            @RequestParam Boolean actualizar_contrasenia) {
+
+        try {
+            return instructorModificarService.actualizarPerfilInstructor(
+                    idUsuario, nombre, apellidoPaterno, apellidoMaterno,
+                    correo, telefono, direccion, nombreUsuario,
+                    contrasenia, actualizar_contrasenia);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error de conexión: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
         }
-
-
     }
-    
+
 }
