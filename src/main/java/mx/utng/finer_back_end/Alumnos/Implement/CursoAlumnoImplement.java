@@ -92,7 +92,7 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
         if (resultados != null && !resultados.isEmpty()) {
             Object[] fila = resultados.get(0);
 
-            if (fila != null && fila.length >= 8) {
+            if (fila != null && fila.length >= 7){
                 try {
                     CertificadoDetalleDTO certificadoDetalles = new CertificadoDetalleDTO(
                             (Integer) fila[0],
@@ -101,7 +101,7 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
                             (String) fila[3],
                             (String) fila[4],
                             (String) fila[5],
-                            ((java.sql.Date) fila[6]).toLocalDate(),
+                            ((Timestamp) fila[6]).toLocalDateTime().toLocalDate(),
                             LocalDate.now());
 
                     return certificadoDetalles;
@@ -110,6 +110,7 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
                     return null;
                 }
             } else {
+                
                 System.out.println("La fila no tiene la cantidad de columnas esperada.");
                 return null;
             }
