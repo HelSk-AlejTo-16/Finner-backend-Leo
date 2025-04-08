@@ -237,15 +237,15 @@ public class CursoAlumnoController {
      *         certificado.
      */
     @GetMapping("/certificado/{idInscripcion}")
-    public ResponseEntity<byte[]> generarCertificado(@PathVariable Integer idInscripcion) {
-        try {
-            CertificadoDetalleDTO certificadoDetalles = cursoService.obtenerDetallesCertificado(idInscripcion);
+public ResponseEntity<byte[]> generarCertificado(@PathVariable Integer idInscripcion) {
+    try {
+        CertificadoDetalleDTO certificadoDetalles = cursoAlumnoService.obtenerDetallesCertificado(idInscripcion);
 
-            if (certificadoDetalles == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(("No se encontraron detalles para el certificado del alumno con la inscripción: "
-                                + idInscripcion).getBytes());
-            }
+        if (certificadoDetalles == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(("No se encontraron detalles para el certificado del alumno con la inscripción: "
+                            + certificadoDetalles).getBytes());
+        }
 
             byte[] pdfContent = pdfGenerationService.generarCertificado(certificadoDetalles);
 
