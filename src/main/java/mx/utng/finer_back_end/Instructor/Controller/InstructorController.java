@@ -1,5 +1,8 @@
 package mx.utng.finer_back_end.Instructor.Controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +40,8 @@ public class InstructorController {
      * @return Respuesta con el mensaje de éxito o error
      */
     @PostMapping("/crear-cuenta")
-    public ResponseEntity<String> crearCuentainstructor(@RequestParam String nombre,
+    public ResponseEntity<Map<String, Object>> crearCuentainstructor(
+            @RequestParam String nombre,
             @RequestParam String apellidoPaterno,
             @RequestParam String apellidoMaterno,
             @RequestParam String correo,
@@ -46,38 +50,43 @@ public class InstructorController {
             @RequestParam String telefono,
             @RequestParam String direccion,
             @RequestParam String cedula) {
-        try {
 
-            ResponseEntity<String> mensaje = instructorService.registrarInstructor(nombre, apellidoPaterno,
-                    apellidoMaterno, correo, contrasenia, nombreUsuario, telefono, direccion, cedula);
-            return mensaje;
+        try {
+            return instructorService.registrarInstructor(
+                    nombre, apellidoPaterno, apellidoMaterno, correo,
+                    contrasenia, nombreUsuario, telefono, direccion, cedula);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error de conexión: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error de conexión: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
         }
     }
 
     @PutMapping("/editar-cuenta")
-    public ResponseEntity<String> actualizarPerfilInstructor(
+    public ResponseEntity<Map<String, Object>> actualizarPerfilInstructor(
             @RequestParam Integer idUsuario,
-            @RequestParam String nombre, 
+            @RequestParam String nombre,
             @RequestParam String apellidoPaterno,
             @RequestParam String apellidoMaterno,
             @RequestParam String correo,
-            @RequestParam String nombreUsuario,
             @RequestParam String telefono,
             @RequestParam String direccion,
+            @RequestParam String nombreUsuario,
             @RequestParam String contrasenia,
-            @RequestParam Boolean actualizar_contrasenia
-            ) {
-        try {
-            ResponseEntity<String> mensaje = instructorModificarService.actualizarPerfilInstructor(idUsuario, nombre,
-                    apellidoPaterno, apellidoMaterno,
-                    nombreUsuario, correo, telefono, direccion, contrasenia,actualizar_contrasenia);
-            return mensaje;
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error de conexión" + e.getMessage());
-        }
+            @RequestParam Boolean actualizar_contrasenia) {
 
+        try {
+            return instructorModificarService.actualizarPerfilInstructor(
+                    idUsuario, nombre, apellidoPaterno, apellidoMaterno,
+                    correo, telefono, direccion, nombreUsuario,
+                    contrasenia, actualizar_contrasenia);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error de conexión: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
 }

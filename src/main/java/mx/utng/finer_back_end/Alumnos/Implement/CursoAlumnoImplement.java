@@ -14,12 +14,12 @@ import mx.utng.finer_back_end.Alumnos.Dao.CursoAlumnoDao;
 import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.ContinuarCursoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.CursoFinalizadoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoInscritoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoNombreAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 import mx.utng.finer_back_end.Documentos.TemaDocumento;
-
 
 @Service
 public class CursoAlumnoImplement implements CursoAlumnoService {
@@ -36,25 +36,23 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
     @Override
     @Transactional
     public List<CursoDetalleAlumnoDTO> getCurso(String tituloCurso) {
-        List<Object[]> resultados = cursoDao.verCursoDetalles(tituloCurso);  // Pasar un String en lugar de Integer
+        List<Object[]> resultados = cursoDao.verCursoDetalles(tituloCurso); // Pasar un String en lugar de Integer
         List<CursoDetalleAlumnoDTO> detalles = new ArrayList<>();
-    
+
         for (Object[] row : resultados) {
             CursoDetalleAlumnoDTO cursoDetalle = new CursoDetalleAlumnoDTO(
-                    (String) row[0],
+                    (Integer) row[0],
                     (String) row[1],
                     (String) row[2],
                     (String) row[3],
-                    (Integer) row[4],
+                    (String) row[4],
                     (Integer) row[5],
-                    (String) row[6]
-            );
+                    (Integer) row[6],
+                    (String) row[7]);
             detalles.add(cursoDetalle);
         }
         return detalles;
     }
-    
-
 
     @Override
     @Transactional
@@ -94,8 +92,21 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
         if (resultados != null && !resultados.isEmpty()) {
             Object[] fila = resultados.get(0);
 
-            if (fila != null && fila.length >= 8) {
+            if (fila != null && fila.length >= 7){
                 try {
+                    LocalDate fechaInscripcion;
+                    if (fila[6] instanceof java.sql.Timestamp) {
+                        // Convertir Timestamp a LocalDate
+                        fechaInscripcion = ((java.sql.Timestamp) fila[6]).toLocalDateTime().toLocalDate();
+                    } else if (fila[6] instanceof java.sql.Date) {
+                        // Por si acaso el tipo cambia en el futuro
+                        fechaInscripcion = ((java.sql.Date) fila[6]).toLocalDate();
+                    } else {
+                        // Si es otro tipo, usar la fecha actual como fallback
+                        fechaInscripcion = LocalDate.now();
+                        System.out.println("Tipo de fecha no reconocido, usando fecha actual");
+                    }
+
                     CertificadoDetalleDTO certificadoDetalles = new CertificadoDetalleDTO(
                             (Integer) fila[0],
                             (String) fila[1],
@@ -103,15 +114,17 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
                             (String) fila[3],
                             (String) fila[4],
                             (String) fila[5],
-                            ((java.sql.Date) fila[6]).toLocalDate(),
+                            ((Timestamp) fila[6]).toLocalDateTime().toLocalDate(),
                             LocalDate.now());
 
                     return certificadoDetalles;
                 } catch (ClassCastException e) {
                     System.err.println("Error de conversión de tipo: " + e.getMessage());
+                    e.printStackTrace(); // Para ver más detalles del error
                     return null;
                 }
             } else {
+                
                 System.out.println("La fila no tiene la cantidad de columnas esperada.");
                 return null;
             }
@@ -196,6 +209,7 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
 
         return cursos;
     }
+
     @Override
     @Transactional
     public List<CursoInscritoDTO> verCursosDelAlumno(Integer idAlumno) {
@@ -204,13 +218,13 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
 
         for (Object[] row : resultados) {
             CursoInscritoDTO curso = new CursoInscritoDTO(
-                (Integer) row[0],           // id_curso
-                (String) row[1],            // titulo_curso
-                (String) row[2],            // descripcion
-                (Integer) row[3],           // id_categoria
-                (String) row[4],            // nombre_categoria
-                ((Timestamp) row[5]).toLocalDateTime(), // fecha_inscripcion
-                (String) row[6]             // estatus_inscripcion
+                    (Integer) row[0], // id_curso
+                    (String) row[1], // titulo_curso
+                    (String) row[2], // descripcion
+                    (Integer) row[3], // id_categoria
+                    (String) row[4], // nombre_categoria
+                    ((Timestamp) row[5]).toLocalDateTime(), // fecha_inscripcion
+                    (String) row[6] // estatus_inscripcion
             );
             cursosInscritos.add(curso);
         }
@@ -222,5 +236,66 @@ public class CursoAlumnoImplement implements CursoAlumnoService {
         return cursoDao.esAlumno(idUsuario);
     }
 
-    
+    @Override
+    public List<CursoFinalizadoDTO> obtenerCursosFinalizadosPorAlumno(Integer idUsuarioAlumno) {
+        List<Object[]> resultados = cursoDao.obtenerCursosFinalizadosPorAlumno(idUsuarioAlumno);
+        List<CursoFinalizadoDTO> cursosFinalizados = new ArrayList<>();
+
+        if (resultados != null && !resultados.isEmpty()) {
+            for (Object[] fila : resultados) {
+                /*
+                 * Orden de columnas según la función:
+                 * 0: id_inscripcion (Integer)
+                 * 1: matricula (String)
+                 * 2: fecha_inscripcion (Timestamp)
+                 * 3: estatus_inscripcion (String)
+                 * 4: id_usuario_alumno (Integer)
+                 * 5: nombre_completo_alumno (String)
+                 * 6: id_curso (Integer)
+                 * 7: id_usuario_instructor (Integer)
+                 * 8: id_categoria (Integer)
+                 * 9: titulo_curso (String)
+                 * 10: descripcion_curso (String)
+                 * 11: nombre_categoria (String)
+                 * 12: nombre_completo_instructor (String)
+                 */
+                try {
+                    Integer idInscripcion = (Integer) fila[0];
+                    String matricula = (String) fila[1];
+                    // Convertir el timestamp a LocalDate:
+                    LocalDate fechaInscripcion = ((java.sql.Timestamp) fila[2]).toLocalDateTime().toLocalDate();
+                    String estatusInscripcion = (String) fila[3];
+                    Integer idUsuarioAlumnoVal = (Integer) fila[4];
+                    String nombreCompletoAlumno = (String) fila[5];
+                    Integer idCurso = (Integer) fila[6];
+                    Integer idUsuarioInstructor = (Integer) fila[7];
+                    Integer idCategoria = (Integer) fila[8];
+                    String tituloCurso = (String) fila[9];
+                    String descripcionCurso = (String) fila[10];
+                    String nombreCategoria = (String) fila[11];
+                    String nombreCompletoInstructor = (String) fila[12];
+
+                    CursoFinalizadoDTO dto = new CursoFinalizadoDTO(
+                            idInscripcion,
+                            matricula,
+                            fechaInscripcion,
+                            estatusInscripcion,
+                            idUsuarioAlumnoVal,
+                            nombreCompletoAlumno,
+                            idCurso,
+                            idUsuarioInstructor,
+                            idCategoria,
+                            tituloCurso,
+                            descripcionCurso,
+                            nombreCategoria,
+                            nombreCompletoInstructor);
+
+                    cursosFinalizados.add(dto);
+                } catch (ClassCastException e) {
+                    System.err.println("Error al mapear la fila: " + e.getMessage());
+                }
+            }
+        }
+        return cursosFinalizados;
+    }
 }

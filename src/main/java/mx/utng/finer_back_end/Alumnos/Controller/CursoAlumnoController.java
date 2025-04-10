@@ -18,10 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 import mx.utng.finer_back_end.Alumnos.Documentos.CertificadoDetalleDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.ContinuarCursoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoDetalleAlumnoDTO;
+import mx.utng.finer_back_end.Alumnos.Documentos.CursoFinalizadoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoInscritoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.CursoNombreAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Documentos.PuntuacionAlumnoDTO;
 import mx.utng.finer_back_end.Alumnos.Implement.CursoAlumnoImplement;
+import mx.utng.finer_back_end.Alumnos.Services.AlumnoService;
 import mx.utng.finer_back_end.Alumnos.Services.CursoAlumnoService;
 import mx.utng.finer_back_end.Alumnos.Services.PdfGenerationService;
 
@@ -35,6 +37,9 @@ public class CursoAlumnoController {
 
     @Autowired
     private CursoAlumnoService cursoService;
+
+    @Autowired
+    private AlumnoService alumnoService;
 
     @Autowired
     private CursoAlumnoImplement cursoAlumnoService;
@@ -73,6 +78,33 @@ public class CursoAlumnoController {
             }
 
             return ResponseEntity.ok(detalles);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para completar un tema en un curso.
+     * 
+     * Este método recibe el ID de inscripción y el ID del tema a completar,
+     * y devuelve la información del tema completado.
+     *
+     * @param idInscripcion ID de inscripción del alumno en el curso.
+     * @param idTema        ID del tema a completar.
+     * @return ResponseEntity con la información del tema completado o un mensaje
+     *         de error en caso de problemas.
+     * 
+     *         Posibles respuestas:
+     *         - `200 OK`: Devuelve la información del tema completado.
+     *         - `404 Not Found`: Si no se encontró el curso o el tema.
+     *         - `500 Internal Server Error`: Si ocurre un error interno en
+     *         el servidor.
+     */
+    @GetMapping("/completar-tema/{idInscripcion}/{idTema}")
+    public ResponseEntity<?> completarTema(@PathVariable String idInscripcion, @PathVariable String idTema) {
+        try {
+            String resultado = alumnoService.completarTema(idInscripcion, idTema);
+            return ResponseEntity.ok(resultado);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error interno del servidor: " + e.getMessage());
         }
@@ -207,12 +239,12 @@ public class CursoAlumnoController {
     @GetMapping("/certificado/{idInscripcion}")
     public ResponseEntity<byte[]> generarCertificado(@PathVariable Integer idInscripcion) {
         try {
-            CertificadoDetalleDTO certificadoDetalles = cursoService.obtenerDetallesCertificado(idInscripcion);
+            CertificadoDetalleDTO certificadoDetalles = cursoAlumnoService.obtenerDetallesCertificado(idInscripcion);
 
             if (certificadoDetalles == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(("No se encontraron detalles para el certificado del alumno con la inscripción: "
-                                + idInscripcion).getBytes());
+                                + certificadoDetalles).getBytes());
             }
 
             byte[] pdfContent = pdfGenerationService.generarCertificado(certificadoDetalles);
@@ -229,7 +261,6 @@ public class CursoAlumnoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error al generar el certificado: " + e.getMessage()).getBytes());
         }
-
     }
 
     /**
@@ -269,7 +300,6 @@ public class CursoAlumnoController {
         }
     }
 
-
     @GetMapping("/curso/nombre/{nombreCurso}")
     public ResponseEntity<?> buscarCursoNombre(@PathVariable String nombreCurso) {
         try {
@@ -277,7 +307,7 @@ public class CursoAlumnoController {
             if (cursos.isEmpty()) {
                 return ResponseEntity.status(404).body("Curso no encontrado");
             }
-            return ResponseEntity.ok(cursos);  // Si se encuentran cursos, retornamos los datos
+            return ResponseEntity.ok(cursos); // Si se encuentran cursos, retornamos los datos
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error en la conexión: " + e.getMessage());
         }
@@ -285,6 +315,7 @@ public class CursoAlumnoController {
 
     /**
      * Endpoint para buscar un curso por su categoria.
+     * 
      * @param nombreCurso
      * @return
      */
@@ -295,69 +326,85 @@ public class CursoAlumnoController {
             if (cursos.isEmpty()) {
                 return ResponseEntity.status(404).body("Curso no encontrado");
             }
-            return ResponseEntity.ok(cursos);  // Si se encuentran cursos, retornamos los datos
+            return ResponseEntity.ok(cursos); // Si se encuentran cursos, retornamos los datos
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error en la conexión: " + e.getMessage());
         }
     }
 
-
-
-        @GetMapping("/continuarCurso/{idCurso}/{idUsuarioAlumno}")
+    @GetMapping("/continuarCurso/{idCurso}/{idUsuarioAlumno}")
     public ResponseEntity<List<ContinuarCursoDTO>> continuarCurso(
-        @PathVariable Integer idCurso, 
-        @PathVariable Integer idUsuarioAlumno
-    ) {
-        try{
-        List<ContinuarCursoDTO> temasPendientes = cursoService.continuarCurso(idCurso, idUsuarioAlumno);
-        if (temasPendientes == null || temasPendientes.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontró el curso: " + idCurso);
-        }
-        return ResponseEntity.ok(temasPendientes);
+            @PathVariable Integer idCurso,
+            @PathVariable Integer idUsuarioAlumno) {
+        try {
+            List<ContinuarCursoDTO> temasPendientes = cursoService.continuarCurso(idCurso, idUsuarioAlumno);
+            if (temasPendientes == null || temasPendientes.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se encontró el curso: " + idCurso);
+            }
+            return ResponseEntity.ok(temasPendientes);
 
-    } catch (DataAccessException e) {
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder a la base de datos",
-                e);
-    } catch (ResponseStatusException e) {
-        throw e;
-    } catch (Exception e) {
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error inesperado", e);
+        } catch (DataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder a la base de datos",
+                    e);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error inesperado", e);
+        }
     }
-}
- /**
+
+    /**
      * Endpoint para obtener los cursos en los que está inscrito un alumno.
-     * Verifica primero si el ID corresponde a un alumno antes de mostrar los cursos.
+     * Verifica primero si el ID corresponde a un alumno antes de mostrar los
+     * cursos.
      * 
      * @param idAlumno ID del alumno del cual se quieren obtener los cursos
      * @return ResponseEntity con la lista de cursos o un mensaje de error
      */
     @GetMapping("/mis-cursos/{idAlumno}")
     public ResponseEntity<?> verCursosDelAlumno(@PathVariable Integer idAlumno) {
+        Map<String, Object> response = new HashMap<>();
+    
         try {
-            // Verificar si es un alumno
             Boolean esAlumno = cursoService.esAlumno(idAlumno);
             if (!esAlumno) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("El ID proporcionado no corresponde a un alumno");
+                response.put("mensaje", "El ID proporcionado no corresponde a un alumno");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
-
+    
             List<CursoInscritoDTO> cursosInscritos = cursoService.verCursosDelAlumno(idAlumno);
-            
+    
             if (cursosInscritos.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("No se encontraron cursos inscritos para el alumno con ID: " + idAlumno);
+                response.put("mensaje", "El alumno no tiene cursos en proceso actualmente");
+                response.put("cursos", cursosInscritos); 
+                return ResponseEntity.ok(response);
             }
-            
             return ResponseEntity.ok(cursosInscritos);
+    
         } catch (DataAccessException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error al acceder a la base de datos: " + e.getMessage());
+            response.put("mensaje", "Error al acceder a la base de datos");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error inesperado: " + e.getMessage());
+            response.put("mensaje", "Error inesperado");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    @GetMapping("/cursos-finalizados/{idUsuarioAlumno}")
+    public ResponseEntity<?> obtenerCursosFinalizadosPorAlumno(@PathVariable Integer idUsuarioAlumno) {
+        List<CursoFinalizadoDTO> cursos = cursoAlumnoService.obtenerCursosFinalizadosPorAlumno(idUsuarioAlumno);
 
+        if (cursos == null || cursos.isEmpty()) {
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("mensaje", "No se encontraron cursos finalizados para el alumno con ID: " + idUsuarioAlumno);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(respuesta);
+        } else {
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("cursos", cursos);
+            return ResponseEntity.ok(respuesta);
+        }
+    }
 
 }

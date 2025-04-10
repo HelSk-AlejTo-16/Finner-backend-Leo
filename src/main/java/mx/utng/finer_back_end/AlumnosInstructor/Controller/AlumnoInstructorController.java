@@ -39,21 +39,6 @@ public class AlumnoInstructorController {
         return alumnoInstructorService.verificarCorreo(correo);
     }
 
-    /**
-     * Este método se encarga de hacer un registro en la tabla usuario
-     * 
-     * @return
-     */
-    @GetMapping("/crear-cuenta/instructor")
-    public ResponseEntity<String> crearCuentaInstructor() {
-        try {
-
-            return ResponseEntity.ok("Cuenta registrada");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error de conexión" + e);
-        }
-    }
-
     @GetMapping("/progresoCurso/{idEstudiante}/{idCurso}")
     public ResponseEntity<?> verProgresoAlumno(@PathVariable Integer idEstudiante, @PathVariable Integer idCurso) {
         try {
@@ -68,6 +53,7 @@ public class AlumnoInstructorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno del servidor");
         }
     }
+    
     @GetMapping("/usuarios/{idUsuario}")
     public ResponseEntity<UsuarioDocumento> obtenerDatosUsuario(@PathVariable Integer idUsuario) {
         UsuarioDocumento usuario = usuarioInstructorService.obtenerDatosUsuario(idUsuario);
