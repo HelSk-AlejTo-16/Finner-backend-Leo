@@ -8,6 +8,7 @@ import mx.utng.finer_back_end.Publicos.Services.EmailService;
 import mx.utng.finer_back_end.Publicos.Services.PublicosService;
 import mx.utng.finer_back_end.Publicos.Services.VerCategoriaService;
 import mx.utng.finer_back_end.Publicos.Services.VerCursoService;
+import mx.utng.finer_back_end.Publicos.Util.JwtUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -84,6 +85,9 @@ public class PublicosController {
      * @return - Regresa la respuesta al frontend que el usuario se autentico y se envio su token 
      * @apiNote - El token que se genera solo funciona mientras la aplicación esta en su linea de vida (no se reinicio)
      */
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping("/iniciar-sesion")
     private ResponseEntity<Map<String, Object>> iniciarSesion(@RequestParam String nombreUsuario, @RequestParam String contrasenia) {
         try {
@@ -101,11 +105,13 @@ public class PublicosController {
                 } catch (Exception e) {
                     return ResponseEntity.status(500).body(Map.of("error", "Ocurrió un error al enviar el correo: " + e.getMessage()));
                 }
+                String token = jwtUtil.generarToken(nombreUsuario);
     
                 // Retornamos los datos requeridos
                 Map<String, Object> response = new HashMap<>();
                 response.put("idUsuario", idUsuario);
                 response.put("idRol", idRol);
+                response.put("token", token);
     
                 return ResponseEntity.ok(response);
             } else {
